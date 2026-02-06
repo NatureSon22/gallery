@@ -156,6 +156,36 @@ LOGIC & OPERATIONS
 
 
 
+{
+  id: '118445413973315650985',
+  displayName: 'Glenn Miranda Banta',
+  name: { familyName: 'Banta', givenName: 'Glenn Miranda' },
+  emails: [ { value: 'sonn99797@gmail.com', verified: true } ],
+  photos: [
+    {
+      value: 'https://lh3.googleusercontent.com/a/ACg8ocJ2F4F6vVtNEdMyt6P6YzxOSj9ybJBSfAWEvJs4Kx-_sEWiaQ=s96-c'
+    }
+  ],
+  provider: 'google',
+  _raw: '{\n' +
+    '  "sub": "118445413973315650985",\n' +
+    '  "name": "Glenn Miranda Banta",\n' +
+    '  "given_name": "Glenn Miranda",\n' +
+    '  "family_name": "Banta",\n' +
+    '  "picture": "https://lh3.googleusercontent.com/a/ACg8ocJ2F4F6vVtNEdMyt6P6YzxOSj9ybJBSfAWEvJs4Kx-_sEWiaQ\\u003ds96-c",\n' +    
+    '  "email": "sonn99797@gmail.com",\n' +
+    '  "email_verified": true\n' +
+    '}',
+  _json: {
+    sub: '118445413973315650985',
+    name: 'Glenn Miranda Banta',
+    given_name: 'Glenn Miranda',
+    family_name: 'Banta',
+    picture: 'https://lh3.googleusercontent.com/a/ACg8ocJ2F4F6vVtNEdMyt6P6YzxOSj9ybJBSfAWEvJs4Kx-_sEWiaQ=s96-c',
+    email: 'sonn99797@gmail.com',
+    email_verified: true
+  }
+}
 
 
 
