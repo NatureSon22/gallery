@@ -114,17 +114,6 @@ export const createSession = async (accountId) => {
   return tokens;
 };
 
-export const forgotPassword = async (req, res, next) => {
-  try {
-    // check if email exists in tb account
-    // still send email even account doesnt exist
-    // token generation
-    
-  } catch (error) {
-    next(error);
-  }
-};
-
 // 2. LOGIN CONTROLLER
 export const login = async (req, res, next) => {
   try {
@@ -133,7 +122,7 @@ export const login = async (req, res, next) => {
     // 1. Fetch user with status and verification flags
     const [loginRows] = await req.db.query(
       "SELECT account_id, email, password, is_active, is_verified FROM tb_account WHERE email = ?",
-      [email]
+      [email],
     );
 
     if (loginRows.length === 0) {
@@ -146,33 +135,40 @@ export const login = async (req, res, next) => {
     if (loginAccount.is_active === 2) {
       return next(new AppError("Invalid email or password", 401)); // Treat as non-existent
     }
-    
+
     if (loginAccount.is_active === 0) {
       return next(new AppError("This account is deactivated.", 403));
     }
 
     // 3. CHECK VERIFICATION (0=Not Verified, 1=Verified)
     if (loginAccount.is_verified === 0) {
-      return next(new AppError("Please verify your email before logging in.", 403));
+      return next(
+        new AppError("Please verify your email before logging in.", 403),
+      );
     }
 
     // 4. VERIFY PASSWORD
-    const isPasswordValid = await argon2.verify(loginAccount.password, password);
+    const isPasswordValid = await argon2.verify(
+      loginAccount.password,
+      password,
+    );
     if (!isPasswordValid) {
       return next(new AppError("Invalid email or password", 401));
     }
 
     // 5. GENERATE TOKENS
-    const { accessToken, refreshToken } = generateTokens(loginAccount.account_id);
+    const { accessToken, refreshToken } = generateTokens(
+      loginAccount.account_id,
+    );
 
     await req.db.query(
       "UPDATE tb_account SET refresh_token = ? WHERE account_id = ?",
-      [refreshToken, loginAccount.account_id]
+      [refreshToken, loginAccount.account_id],
     );
 
     res.status(200).json({
       status: "success",
-      data: { accessToken, refreshToken }
+      data: { accessToken, refreshToken },
     });
   } catch (err) {
     next(err);
@@ -194,7 +190,7 @@ export const refreshToken = async (req, res, next) => {
     // Check if token exists in DB (revocation check)
     const [userRows] = await req.db.query(
       "SELECT account_id, refresh_token FROM tb_account WHERE account_id = ?",
-      [decoded.account_id]
+      [decoded.account_id],
     );
 
     if (userRows.length === 0 || userRows[0].refresh_token !== incomingToken) {
@@ -207,7 +203,7 @@ export const refreshToken = async (req, res, next) => {
     // Update DB with new refresh token
     await req.db.query(
       "UPDATE tb_account SET refresh_token = ? WHERE account_id = ?",
-      [tokens.refreshToken, decoded.account_id]
+      [tokens.refreshToken, decoded.account_id],
     );
 
     res.status(200).json({
@@ -216,5 +212,98 @@ export const refreshToken = async (req, res, next) => {
     });
   } catch (err) {
     next(new AppError("Invalid or expired refresh token", 403));
+  }
+};
+
+export const forgotPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    const [existingUser] = await db.execute(
+      "SELECT account_id, is_active, is_verified FROM tb_account WHERE email = ?",
+      [email],
+    );
+
+    if (existingUser.length > 0) {
+      const user = existingUser[0];
+
+      if (user.is_verified === 1 && user.is_active === 1) {
+        const resetToken = crypto.randomBytes(32).toString("hex");
+        const expiresAt = new Date(Date.now() + 3600000); // 1 hour expiry
+
+        // Clean up any existing tokens for this specific user
+        await db.execute(
+          "DELETE FROM tb_password_resets WHERE account_id = ?",
+          [user.account_id],
+        );
+
+        // Insert the new token
+        await db.execute(
+          "INSERT INTO tb_password_resets (account_id, reset_token, expires_at) VALUES (?, ?, ?)",
+          [user.account_id, resetToken, expiresAt],
+        );
+
+        // TODO: Send Email logic here
+        console.log(`Token for ${email}: ${resetToken}`);
+      }
+    }
+
+    // Always return success to prevent email fishing
+    return res.status(200).json({
+      message:
+        "If an account with that email exists, a reset link has been sent.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const resetPassword = async (req, res, next) => {
+  const connection = await db.getConnection();
+  try {
+    const { token, newPassword } = req.body; // 'token' coming from frontend body
+
+    // Find user by 'reset_token' and check expiry
+    const [resetRecord] = await connection.execute(
+      "SELECT account_id FROM tb_password_resets WHERE reset_token = ? AND expires_at > NOW()",
+      [token],
+    );
+
+    if (resetRecord.length === 0) {
+      throw new AppError("Invalid or expired reset token", 400);
+    }
+
+    const accountId = resetRecord[0].account_id;
+    const hashedPassword = await argon2.hash(newPassword, {
+      type: argon2.argon2id,
+    });
+
+    await connection.beginTransaction();
+
+    // Update password
+    await connection.execute(
+      "UPDATE tb_account SET password = ? WHERE account_id = ?",
+      [hashedPassword, accountId],
+    );
+
+    // Delete the used token from tb_password_resets
+    await connection.execute(
+      "DELETE FROM tb_password_resets WHERE account_id = ?",
+      [accountId],
+    );
+
+    // Invalidate all sessions/refresh tokens
+    await connection.execute(
+      "DELETE FROM tb_refresh_token WHERE account_id = ?",
+      [accountId],
+    );
+
+    await connection.commit();
+    res.status(200).json({ message: "Password updated successfully." });
+  } catch (error) {
+    await connection.rollback();
+    next(error);
+  } finally {
+    connection.release();
   }
 };
