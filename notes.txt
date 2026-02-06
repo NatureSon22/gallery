@@ -1,0 +1,161 @@
+Framework: Express.js
+Database: MySQL
+Authentication: Passport-JWT + Refresh token
+Validation: Zod
+Logger: Morgan + Winston
+Security!! cors, ratelimit, helmet
+TODO: 
+
+
+ Login
+Signin google
+Signup
+Forgot-password
+Reset-password
+Get profile
+
+Upload profile image
+Upload photos
+Update profile
+Deactivate account
+Delete account
+
+
+
+Login
+Signin google - OAUTH
+Signup
+Forgot-password
+Reset-password
+
+tb account 
+    accountId
+    email
+    password
+    active  ->  0(active) 1(deactivated) 2(deleted)
+    createdAt
+    updatedAt
+
+tb accountProfile
+    accountProfileId
+    name
+    age
+    accountId  (FK)
+    createdAt
+    updatedAt
+    
+tb account_token
+    tokenId
+    accountId
+    refreshToken
+    expiredDate
+    createdAt
+    updatedAt
+
+
+Upload profile image
+Upload photos
+Update profile
+Deactivate account
+Delete account
+
+tb gallery
+    galleryId
+    accountid
+
+tb photos
+    id
+    galleryId
+
+
+
+
+============================================================
+PROJECT NAME: Base (or AegisJS)
+STACK: Express.js | MySQL | Passport-JWT | Zod | Morgan/Winston
+============================================================
+
+TABLE: tb_account
+------------------------------------------------------------
+- account_id        : INT/UUID (PK)
+- email             : VARCHAR(255) (Unique, Indexed)
+- password          : VARCHAR(255) (Nullable for OAuth)
+- google_id         : VARCHAR(255) (Unique, Nullable)
+- is_active         : TINYINT(1) (Default: 1 - For Deactivation) (2 - For Deletion)
+- is_verified       : TINYINT(1) (Default: 0)
+- created_at        : TIMESTAMP
+- updated_at        : TIMESTAMP
+
+TABLE: tb_profile
+------------------------------------------------------------
+- profile_id        : INT/UUID (PK)
+- account_id        : INT/UUID (FK -> tb_account.account_id, Unique)
+- display_name      : VARCHAR(100)
+- age               : INT
+- avatar_url        : TEXT (For "Upload Profile Image")
+- updated_at        : TIMESTAMP
+
+TABLE: tb_refresh_token
+------------------------------------------------------------
+- token_id          : INT/UUID (PK)
+- account_id        : INT/UUID (FK -> tb_account.account_id)
+- refresh_token     : TEXT
+- expires_at        : DATETIME
+- is_revoked        : TINYINT(1) (Default: 0)
+
+TABLE: tb_password_resets
+------------------------------------------------------------
+- reset_id          : INT/UUID (PK)
+- account_id        : INT/UUID (FK -> tb_account.account_id)
+- reset_token       : VARCHAR(255)
+- expires_at        : DATETIME
+
+TABLE: tb_gallery
+------------------------------------------------------------
+- gallery_id        : INT/UUID (PK)
+- account_id        : INT/UUID (FK -> tb_account.account_id, Unique)
+- title             : VARCHAR(100) (e.g., "My Uploads")
+- created_at        : TIMESTAMP
+
+TABLE: tb_photos
+------------------------------------------------------------
+- photo_id          : INT/UUID (PK)
+- gallery_id        : INT/UUID (FK -> tb_gallery.gallery_id)
+- url               : TEXT // string
+- created_at        : TIMESTAMP
+
+============================================================
+LOGIC & OPERATIONS
+============================================================
+
+1. UPLOAD PROFILE IMAGE:
+   - Target: tb_profile
+   - Action: Update 'avatar_url' column.
+
+2. UPLOAD PHOTOS:
+   - Target: tb_photos
+   - Action: Insert new row linked to user's gallery_id.
+
+3. UPDATE PROFILE:
+   - Target: tb_profile
+   - Action: PATCH request to update name, age, or bio.
+
+4. DEACTIVATE ACCOUNT:
+   - Target: tb_account
+   - Action: SET is_active = 0. 
+   - Note: Logic should prevent login if is_active is 0.
+
+5. DELETE ACCOUNT:
+   - Target: tb_account
+   - Action: DELETE FROM tb_account WHERE account_id = X.
+============================================================
+
+
+
+
+
+
+
+
+
+
