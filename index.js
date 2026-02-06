@@ -1,17 +1,15 @@
 import express, { json, urlencoded } from "express";
 import { config } from "dotenv";
-
 import helmet from "helmet";
 import morgan from "morgan";
 import { rateLimit } from "express-rate-limit"; // Requires: npm i express-rate-limit
 import router from "./router/index.js";
 import db from "./helper/db.js";
-import passport from "./helper/strategy.js";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import errorHandler from "./middleware/errorHandler.js";
 import logger from "./helper/logger.js";
-import jwtStrategy from "./strategies/passportJWT.js";
+import passport from "./helper/strategy.js";
 
 config();
 
@@ -39,7 +37,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // 4. Authentication (Passport)
-passport.use(jwtStrategy);
 app.use(passport.initialize());
 
 // 5. Attach DB to Request
