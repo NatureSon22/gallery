@@ -19,57 +19,6 @@ Upload photos
 Update profile
 Deactivate account
 Delete account
-
-
-
-Login
-Signin google - OAUTH
-Signup
-Forgot-password
-Reset-password
-
-tb account 
-    accountId
-    email
-    password
-    active  ->  0(active) 1(deactivated) 2(deleted)
-    createdAt
-    updatedAt
-
-tb accountProfile
-    accountProfileId
-    name
-    age
-    accountId  (FK)
-    createdAt
-    updatedAt
-    
-tb account_token
-    tokenId
-    accountId
-    refreshToken
-    expiredDate
-    createdAt
-    updatedAt
-
-
-Upload profile image
-Upload photos
-Update profile
-Deactivate account
-Delete account
-
-tb gallery
-    galleryId
-    accountid
-
-tb photos
-    id
-    galleryId
-
-
-
-
 ============================================================
 PROJECT NAME: Base (or AegisJS)
 STACK: Express.js | MySQL | Passport-JWT | Zod | Morgan/Winston
