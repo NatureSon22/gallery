@@ -1,4 +1,4 @@
-import express from "express";
+import express, { json, urlencoded } from "express";
 import { config } from "dotenv";
 import router from "./router/index.js";
 import db from "./helper/db.js";

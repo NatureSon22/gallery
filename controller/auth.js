@@ -6,15 +6,13 @@ import generateTokens from "../helper/generateToken.js";
 
 export const signup = async (req, res, next) => {
   try {
-
-const { email, password, display_name, age } = req.validatedBody;
-const plan = req.validatedQuery?.plan || "free";
-
+    const { email, password, display_name, age } = req.validatedBody;
+    const plan = req.validatedQuery?.plan || "free";
 
     // Check if email exists
     const [rows] = await req.db.query(
       "SELECT account_id FROM tb_account WHERE email = ?",
-      [email]
+      [email],
     );
 
     if (rows.length > 0) {
@@ -22,12 +20,14 @@ const plan = req.validatedQuery?.plan || "free";
     }
 
     // Hash password
-    const hashedPassword = await argon2.hash(password, { type: argon2.argon2id });
+    const hashedPassword = await argon2.hash(password, {
+      type: argon2.argon2id,
+    });
 
     // Insert account
     const [accountResult] = await req.db.query(
       "INSERT INTO tb_account (email, password, created_at) VALUES (?, ?, NOW())",
-      [email, hashedPassword]
+      [email, hashedPassword],
     );
 
     const accountId = accountResult.insertId;
@@ -35,13 +35,13 @@ const plan = req.validatedQuery?.plan || "free";
     // Insert profile
     await req.db.query(
       "INSERT INTO tb_profile (account_id, display_name, age, updated_at) VALUES (?, ?, ?, NOW())",
-      [accountId, display_name || null, age || null]
+      [accountId, display_name || null, age || null],
     );
 
     // Insert default gallery
     await req.db.query(
       "INSERT INTO tb_gallery (account_id, title, created_at) VALUES (?, 'My Uploads', NOW())",
-      [accountId]
+      [accountId],
     );
 
     res.status(201).json({
@@ -53,19 +53,19 @@ const plan = req.validatedQuery?.plan || "free";
   }
 };
 
-
 export const findOrCreateGoogleUser = async (profile) => {
   const { id, _json } = profile;
   const email = _json.email;
 
   //  Check if user exists
   const [existingUser] = await db.execute(
-    "SELECT account_id, is_active FROM tb_account WHERE google_id = ? OR email = ?",
+    "SELECT account_id, is_active, is_verified FROM tb_account WHERE google_id = ? OR email = ?",
     [id, email],
   );
 
   if (existingUser.length > 0) {
     const user = existingUser[0];
+    if (user.is_verified !== 1) throw new Error("NOT_VERIFIED");
     if (user.is_active !== 1) throw new Error("INACTIVE_ACCOUNT");
     return user.account_id;
   }
@@ -111,4 +111,15 @@ export const createSession = async (accountId) => {
   );
 
   return tokens;
+};
+
+export const forgotPassword = async (req, res, next) => {
+  try {
+    // check if email exists in tb account
+    // still send email even account doesnt exist
+    // token generation
+    
+  } catch (error) {
+    next(error);
+  }
 };

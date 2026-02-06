@@ -25,6 +25,10 @@ const verifyGoogle = async (accessToken, refreshToken, profile, done) => {
 
     return done(null, { tokens });
   } catch (error) {
+    if (error.message === "NOT_VERIFIED") {
+      return done(null, false, { message: "Account is not verified" });
+    }
+
     if (error.message === "INACTIVE_ACCOUNT") {
       return done(null, false, { message: "Account is inactive" });
     }
@@ -41,7 +45,7 @@ const jwtOpt = {
 const verifyJwt = async (payload, done) => {
   try {
     const [rows] = await db.execute(
-      "SELECT account_id, email, is_active FROM tb_account WHERE account_id = ?",
+      "SELECT account_id, email, is_active, is_verified FROM tb_account WHERE account_id = ?",
       [payload.account_id],
     );
 
@@ -51,7 +55,10 @@ const verifyJwt = async (payload, done) => {
 
     const user = rows[0];
 
-    // Check if account is active (1 = Active)
+    if (user.is_verified !== 1) {
+      return done(null, false, { message: "Account is not verified" });
+    }
+
     if (user.is_active !== 1) {
       return done(null, false, { message: "Account is inactive or deleted" });
     }
