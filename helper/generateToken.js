@@ -4,18 +4,24 @@ import { config } from "dotenv";
 config();
 
 const generateTokens = (account_id) => {
+  // Debugging: If these are undefined, the .env isn't loading
+  const secret = process.env.JWT_SECRET;
+  const refreshSecret = process.env.JWT_REFRESH_SECRET;
+
+  if (!secret || !refreshSecret) {
+    throw new Error("JWT Secrets are missing from .env file");
+  }
+
   const accessToken = jwt.sign(
     { account_id: account_id },
-    process.env.JWT_SECRET,
-    {
-      expiresIn: "15m",
-    },
+    secret,
+    { expiresIn: "15m" }
   );
 
   const refreshToken = jwt.sign(
     { account_id: account_id },
-    process.env.JWT_REFRESH_SECRET,
-    { expiresIn: "7d" },
+    refreshSecret,
+    { expiresIn: "7d" }
   );
 
   return { accessToken, refreshToken };

@@ -1,0 +1,42 @@
+{"level":"info","message":"Server is running on port: 8000","timestamp":"2026-02-06T07:05:26.855Z"}
+{"level":"info","message":"Server is running on port: 8000","timestamp":"2026-02-06T07:16:40.376Z"}
+{"level":"info","message":"::1 - - [06/Feb/2026:07:17:14 +0000] \"GET /api/v1/auth/login HTTP/1.1\" 404 156 \"-\" \"PostmanRuntime/7.39.1\"","timestamp":"2026-02-06T07:17:14.523Z"}
+{"level":"info","message":"::1 - - [06/Feb/2026:07:17:43 +0000] \"POST /api/v1/auth/login HTTP/1.1\" 500 94 \"-\" \"PostmanRuntime/7.39.1\"","timestamp":"2026-02-06T07:17:43.682Z"}
+{"level":"info","message":"Server is running on port: 8000","timestamp":"2026-02-06T07:18:41.070Z"}
+{"level":"info","message":"::1 - - [06/Feb/2026:07:20:08 +0000] \"POST /api/v1/auth/login HTTP/1.1\" 500 99 \"-\" \"PostmanRuntime/7.39.1\"","timestamp":"2026-02-06T07:20:08.266Z"}
+{"level":"info","message":"Server is running on port: 8000","timestamp":"2026-02-06T07:22:08.327Z"}
+{"level":"info","message":"::1 - - [06/Feb/2026:07:22:53 +0000] \"POST /api/v1/auth/login HTTP/1.1\" 401 55 \"-\" \"PostmanRuntime/7.39.1\"","timestamp":"2026-02-06T07:22:53.945Z"}
+{"level":"info","message":"Server is running on port: 8000","timestamp":"2026-02-06T07:28:37.970Z"}
+{"level":"info","message":"Server is running on port: 8000","timestamp":"2026-02-06T07:29:56.236Z"}
+{"level":"info","message":"Server is running on port: 8000","timestamp":"2026-02-06T07:31:00.240Z"}
+{"level":"info","message":"::1 - - [06/Feb/2026:07:31:49 +0000] \"POST /api/v1/auth/login HTTP/1.1\" 401 55 \"-\" \"PostmanRuntime/7.39.1\"","timestamp":"2026-02-06T07:31:49.299Z"}
+{"level":"info","message":"Server is running on port: 8000","timestamp":"2026-02-06T07:35:48.503Z"}
+{"level":"info","message":"Server is running on port: 8000","timestamp":"2026-02-06T07:36:33.702Z"}
+{"level":"info","message":"::1 - - [06/Feb/2026:07:37:21 +0000] \"POST /api/auth/login HTTP/1.1\" 404 154 \"-\" \"PostmanRuntime/7.39.1\"","timestamp":"2026-02-06T07:37:21.476Z"}
+{"level":"info","message":"::1 - - [06/Feb/2026:07:38:02 +0000] \"POST /api/v1/auth/login HTTP/1.1\" 401 55 \"-\" \"PostmanRuntime/7.39.1\"","timestamp":"2026-02-06T07:38:02.927Z"}
+{"level":"info","message":"Server is running on port: 8000","timestamp":"2026-02-06T07:39:56.299Z"}
+{"level":"info","message":"Server is running on port: 8000","timestamp":"2026-02-06T07:40:32.472Z"}
+{"level":"info","message":"::1 - - [06/Feb/2026:07:40:40 +0000] \"POST /api/v1/auth/login HTTP/1.1\" 401 55 \"-\" \"PostmanRuntime/7.39.1\"","timestamp":"2026-02-06T07:40:40.129Z"}
+{"level":"info","message":"Server is running on port: 8000","timestamp":"2026-02-06T07:41:03.969Z"}
+{"level":"info","message":"::1 - - [06/Feb/2026:07:42:00 +0000] \"POST /api/v1/auth/login HTTP/1.1\" 401 55 \"-\" \"PostmanRuntime/7.39.1\"","timestamp":"2026-02-06T07:42:00.228Z"}
+{"level":"info","message":"Server is running on port: 8000","timestamp":"2026-02-06T07:47:04.065Z"}
+{"level":"info","message":"Server is running on port: 8000","timestamp":"2026-02-06T07:50:34.843Z"}
+{"level":"info","message":"Server is running on port: 8000","timestamp":"2026-02-06T07:50:36.491Z"}
+{"level":"info","message":"::1 - - [06/Feb/2026:07:52:51 +0000] \"POST /api/v1/auth/signup HTTP/1.1\" 201 80 \"-\" \"PostmanRuntime/7.39.1\"","timestamp":"2026-02-06T07:52:51.588Z"}
+{"level":"info","message":"Server is running on port: 8000","timestamp":"2026-02-06T07:52:52.994Z"}
+{"level":"info","message":"::1 - - [06/Feb/2026:07:53:52 +0000] \"POST /api/v1/auth/login HTTP/1.1\" 500 67 \"-\" \"PostmanRuntime/7.39.1\"","timestamp":"2026-02-06T07:53:52.878Z"}
+{"level":"info","message":"Server is running on port: 8000","timestamp":"2026-02-06T07:54:14.876Z"}
+{"level":"info","message":"::1 - - [06/Feb/2026:07:54:36 +0000] \"POST /api/v1/auth/login HTTP/1.1\" 400 80 \"-\" \"PostmanRuntime/7.39.1\"","timestamp":"2026-02-06T07:54:36.669Z"}
+{"level":"info","message":"::1 - - [06/Feb/2026:07:54:46 +0000] \"POST /api/v1/auth/login HTTP/1.1\" 500 67 \"-\" \"PostmanRuntime/7.39.1\"","timestamp":"2026-02-06T07:54:46.005Z"}
+{"level":"info","message":"Server is running on port: 8000","timestamp":"2026-02-06T07:57:04.778Z"}
+{"level":"info","message":"Server is running on port: 8000","timestamp":"2026-02-06T07:57:52.594Z"}
+{"level":"info","message":"Server is running on port: 8000","timestamp":"2026-02-06T07:58:28.113Z"}
+{"level":"info","message":"::1 - - [06/Feb/2026:07:59:41 +0000] \"POST /api/v1/auth/login HTTP/1.1\" 500 77 \"-\" \"PostmanRuntime/7.39.1\"","timestamp":"2026-02-06T07:59:41.393Z"}
+{"level":"info","message":"Server is running on port: 8000","timestamp":"2026-02-06T08:06:48.755Z"}
+{"level":"info","message":"Server is running on port: 8000","timestamp":"2026-02-06T08:07:34.153Z"}
+{"level":"info","message":"::1 - - [06/Feb/2026:08:11:08 +0000] \"POST /api/v1/auth/login HTTP/1.1\" 401 55 \"-\" \"PostmanRuntime/7.39.1\"","timestamp":"2026-02-06T08:11:08.899Z"}
+{"level":"info","message":"::1 - - [06/Feb/2026:08:14:30 +0000] \"POST /api/v1/auth/signup HTTP/1.1\" 201 80 \"-\" \"PostmanRuntime/7.39.1\"","timestamp":"2026-02-06T08:14:30.646Z"}
+{"level":"info","message":"Server is running on port: 8000","timestamp":"2026-02-06T08:23:10.681Z"}
+{"level":"info","message":"::1 - - [06/Feb/2026:08:25:04 +0000] \"POST /api/v1/auth/login HTTP/1.1\" 500 77 \"-\" \"PostmanRuntime/7.39.1\"","timestamp":"2026-02-06T08:25:04.403Z"}
+{"level":"info","message":"::1 - - [06/Feb/2026:08:26:14 +0000] \"POST /api/v1/auth/login HTTP/1.1\" 200 360 \"-\" \"PostmanRuntime/7.39.1\"","timestamp":"2026-02-06T08:26:14.063Z"}
+{"level":"info","message":"::1 - - [06/Feb/2026:08:27:57 +0000] \"POST /api/v1/auth/signup HTTP/1.1\" 201 80 \"-\" \"PostmanRuntime/7.39.1\"","timestamp":"2026-02-06T08:27:57.724Z"}
