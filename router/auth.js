@@ -1,8 +1,9 @@
 import { Router } from "express";
 import passport from "../helper/strategy.js";
 import validate from "../middleware/validation.js";
-import { signup, login, refreshToken } from "../controller/auth.js";
+import { signup, login, refreshToken, verifyEmail } from "../controller/auth.js";
 import { signupSchema, signupQuerySchema, loginSchema } from "../schemas/auth.schema.js";
+
 
 const authRouter = Router();
 
@@ -67,5 +68,8 @@ authRouter.post(
   "/refresh",
   refreshToken
 );
+
+authRouter.get("/verify-email", verifyEmail);
+
 
 export default authRouter;
