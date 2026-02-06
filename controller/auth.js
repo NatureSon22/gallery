@@ -3,6 +3,9 @@ import jwt from "jsonwebtoken";
 import AppError from "../helper/AppError.js";
 import db from "../helper/db.js";
 import generateTokens from "../helper/generateToken.js";
+import crypto from "crypto";
+import { sendVerificationEmail } from "../helper/mailer.js";
+
 
 // 1. SIGNUP CONTROLLER
 export const signup = async (req, res, next) => {
@@ -45,10 +48,25 @@ export const signup = async (req, res, next) => {
       [accountId],
     );
 
+        // Create verification token
+    const verifyToken = crypto.randomBytes(32).toString("hex");
+
+    // Store token (expires in 24h)
+    await req.db.query(
+      `INSERT INTO tb_email_verifications (account_id, verify_token, expires_at)
+      VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 1 DAY))`,
+      [accountId, verifyToken]
+    );
+
+    // Send email
+    await sendVerificationEmail(email, verifyToken);
+
+
     res.status(201).json({
-      status: "success",
-      message: `Account created successfully with plan "${plan}"`,
-    });
+  status: "success",
+  message: "Account created. Please verify your email.",
+});
+
   } catch (err) {
     next(err);
   }
@@ -214,6 +232,48 @@ export const refreshToken = async (req, res, next) => {
     next(new AppError("Invalid or expired refresh token", 403));
   }
 };
+
+export const verifyEmail = async (req, res, next) => {
+  try {
+    const { token } = req.query;
+
+    if (!token) {
+      return next(new AppError("Verification token missing", 400));
+    }
+
+    const [rows] = await req.db.query(
+      `SELECT account_id FROM tb_email_verifications
+       WHERE verify_token = ? AND expires_at > NOW()`,
+      [token]
+    );
+
+    if (rows.length === 0) {
+      return next(new AppError("Invalid or expired token", 400));
+    }
+
+    const accountId = rows[0].account_id;
+
+    // Mark verified
+    await req.db.query(
+      "UPDATE tb_account SET is_verified = 1 WHERE account_id = ?",
+      [accountId]
+    );
+
+    // Remove token
+    await req.db.query(
+      "DELETE FROM tb_email_verifications WHERE account_id = ?",
+      [accountId]
+    );
+
+    res.json({
+      status: "success",
+      message: "Email verified successfully",
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 
 export const forgotPassword = async (req, res, next) => {
   try {
