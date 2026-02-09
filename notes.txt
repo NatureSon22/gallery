@@ -30,7 +30,7 @@ TABLE: tb_account
 - email             : VARCHAR(255) (Unique, Indexed)
 - password          : VARCHAR(255) (Nullable for OAuth)
 - google_id         : VARCHAR(255) (Unique, Nullable)
-- is_active         : TINYINT(1) (Default: 1 - For Deactivation) (2 - For Deletion)
+- is_active         : TINYINT(1) (Default: 1 Active) ( 2 - For Deactivation) (0 - For Deletion)
 - is_verified       : TINYINT(1) (Default: 0)
 - created_at        : TIMESTAMP
 - updated_at        : TIMESTAMP
