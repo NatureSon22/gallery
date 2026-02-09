@@ -1,5 +1,11 @@
 import { Router } from "express";
-import { getProfile, updateProfile } from "../controller/user.js";
+import { 
+  getProfile, 
+  updateProfile, 
+  deactivateAccount, 
+  reactivateAccount, 
+  deleteAccount     
+} from "../controller/user.js";
 import { protect } from "../middleware/index.js";
 
 const userRouter = Router();
@@ -14,5 +20,9 @@ userRouter.use(protect);
 
 userRouter.get("/profile", getProfile);
 userRouter.patch("/profile", updateProfile);
+
+userRouter.patch("/deactivate", deactivateAccount);
+userRouter.patch("/reactivate", reactivateAccount);
+userRouter.delete("/delete", deleteAccount);    
 
 export default userRouter;

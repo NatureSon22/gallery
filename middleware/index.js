@@ -1,27 +1,26 @@
 import jwt from "jsonwebtoken";
+import passport from 'passport';
 import AppError from "../helper/AppError.js";
 
+
+
+// This replaces your manual jwt.verify logic
 export const protect = (req, res, next) => {
-  try {
-    let token;
-    if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
-      token = req.headers.authorization.split(" ")[1];
+  passport.authenticate('jwt', { session: false }, (err, user, info) => {
+    // 1. Handle errors (like connection issues)
+    if (err) {
+      return next(err);
     }
 
-    if (!token) {
-      return next(new AppError("You are not logged in. Please login to get access.", 401));
+    // 2. Handle invalid or missing tokens
+    if (!user) {
+      return next(new AppError("You are not logged in or the token is invalid. Please login to get access.", 401));
     }
 
-    // Verify token
-    // Inside middleware/index.js 'protect' function
-const decoded = jwt.verify(token, process.env.JWT_SECRET);
-console.log("Decoded Token:", decoded); // DEBUG: Check this in your terminal
-req.user = decoded; // This makes req.user.account_id available
-
-    // Grant access to the account_id
-    req.user = { account_id: decoded.account_id };
+    // 3. Attach the user to the request
+    // This ensures req.user.account_id is available in your controllers
+    req.user = user;
+    
     next();
-  } catch (err) {
-    return next(new AppError("Invalid or expired token.", 401));
-  }
+  })(req, res, next);
 };

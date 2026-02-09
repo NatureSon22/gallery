@@ -55,13 +55,14 @@ const verifyJwt = async (payload, done) => {
 
     const user = rows[0];
 
-    if (user.is_verified !== 1) {
-      return done(null, false, { message: "Account is not verified" });
+    // Block if account is marked as Deleted (0)
+    if (user.is_active === 0) {
+      return done(null, false, { message: "Account no longer exists." });
     }
 
-    if (user.is_active !== 1) {
-      return done(null, false, { message: "Account is inactive or deleted" });
-    }
+    // IMPORTANT: We REMOVED the strict (is_active !== 1) check here.
+    // This allows Status 2 users to stay "logged in" just enough 
+    // to reach the reactivation route in your controller.
 
     return done(null, user);
   } catch (error) {
