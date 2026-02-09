@@ -32,15 +32,33 @@ authRouter.get(
 
 authRouter.get(
   "/google/callback",
-  passport.authenticate("google", {
-    failureRedirect: "/login",
-    session: false,
-  }),
-  (req, res) => {
-    const { tokens } = req.user;
+  (req, res, next) => {
+    passport.authenticate("google", { session: false }, (err, user, info) => {
+      // 1. Handle Errors (e.g., Database errors or "Email already registered")
+      if (err) {
+        return res.status(400).json({
+          status: "error",
+          message: err.message
+        });
+      }
 
-    res.json({ message: "Login successfull", tokens });
-  },
+      // 2. Handle Authentication Failure (e.g., User denied access)
+      if (!user) {
+        return res.status(401).json({
+          status: "fail",
+          message: info?.message || "Google authentication failed"
+        });
+      }
+
+      // 3. Success: Manual response with tokens
+      // 'user' here contains the { tokens } object returned from your verifyGoogle strategy
+      res.status(200).json({
+        status: "success",
+        message: "Login successful",
+        data: user.tokens
+      });
+    })(req, res, next);
+  }
 );
 
 // POST /auth/login

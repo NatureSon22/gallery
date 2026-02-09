@@ -77,16 +77,25 @@ export const findOrCreateGoogleUser = async (profile) => {
   const { id, _json } = profile;
   const email = _json.email;
 
-  //  Check if user exists
+  // 1. Check if the email exists in any form
   const [existingUser] = await db.execute(
-    "SELECT account_id, is_active, is_verified FROM tb_account WHERE google_id = ? OR email = ?",
-    [id, email],
+    "SELECT account_id, google_id, is_active, is_verified FROM tb_account WHERE email = ?",
+    [email],
   );
 
   if (existingUser.length > 0) {
     const user = existingUser[0];
+
+    // 2. PRIORITY CHECK: Is this a manual account?
+    // If google_id is NULL, they have a password and shouldn't use Google signup
+    if (user.google_id === null) {
+       throw new Error("This email is already registered with a password. Please log in manually.");
+    }
+
+    // 3. Status checks (Verified/Active)
     if (user.is_verified !== 1) throw new Error("NOT_VERIFIED");
-    if (user.is_active !== 1) throw new Error("INACTIVE_ACCOUNT");
+    if (user.is_active === 0) throw new Error("DELETED_ACCOUNT");
+    
     return user.account_id;
   }
 
