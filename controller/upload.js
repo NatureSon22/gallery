@@ -52,3 +52,11 @@ export const uploadPhotos = async (req, res, next) => {
     next(error);
   }
 };
+
+export const deletePhotos = async (req, res, next) => {
+  try {
+    const { photo_ids } = req.body;
+  } catch (error) {
+    next(error);
+  }
+};
