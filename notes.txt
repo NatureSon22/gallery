@@ -137,4 +137,4 @@ LOGIC & OPERATIONS
 }
 
 
-
+http://localhost:8000/uploads/1770691562613-628966919-herosubbg.jpg

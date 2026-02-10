@@ -1,6 +1,7 @@
 import { Router } from "express";
 import authRouter from "./auth.js";
 import userRouter from "./user.js";
+import uploadRouter from "./upload.js";
 
 const routes = [
   {
@@ -10,6 +11,10 @@ const routes = [
   {
     path: "/user",
     router: userRouter,
+  },
+  {
+    path: "/upload",
+    router: uploadRouter,
   },
 ];
 

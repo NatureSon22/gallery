@@ -16,14 +16,14 @@ const googleOpt = {
 const verifyGoogle = async (accessToken, refreshToken, profile, done) => {
   try {
     // Identify the user
-    const accountId = await findOrCreateGoogleUser(profile);
+    const { accountId, galleryId } = await findOrCreateGoogleUser(profile);
 
     // Create the tokens
     const tokens = await createSession(accountId);
 
-    console.log(tokens);
+    const user = { account_id: accountId, gallery_id: galleryId };
 
-    return done(null, { tokens });
+    return done(null, { tokens, user });
   } catch (error) {
     if (error.message === "NOT_VERIFIED") {
       return done(null, false, { message: "Account is not verified" });
@@ -61,7 +61,7 @@ const verifyJwt = async (payload, done) => {
     }
 
     // IMPORTANT: We REMOVED the strict (is_active !== 1) check here.
-    // This allows Status 2 users to stay "logged in" just enough 
+    // This allows Status 2 users to stay "logged in" just enough
     // to reach the reactivation route in your controller.
 
     return done(null, user);

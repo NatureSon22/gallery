@@ -1,12 +1,11 @@
 import argon2 from "argon2";
-import passport from 'passport';
+import passport from "passport";
 import jwt from "jsonwebtoken";
 import AppError from "../helper/AppError.js";
 import db from "../helper/db.js";
 import generateTokens from "../helper/generateToken.js";
 import crypto from "crypto";
 import { sendVerificationEmail } from "../helper/mailer.js";
-
 
 // 1. SIGNUP CONTROLLER
 export const signup = async (req, res, next) => {
@@ -49,25 +48,23 @@ export const signup = async (req, res, next) => {
       [accountId],
     );
 
-        // Create verification token
+    // Create verification token
     const verifyToken = crypto.randomBytes(32).toString("hex");
 
     // Store token (expires in 24h)
     await req.db.query(
       `INSERT INTO tb_email_verifications (account_id, verify_token, expires_at)
       VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 1 DAY))`,
-      [accountId, verifyToken]
+      [accountId, verifyToken],
     );
 
     // Send email
     await sendVerificationEmail(email, verifyToken);
 
-
     res.status(201).json({
-  status: "success",
-  message: "Account created. Please verify your email.",
-});
-
+      status: "success",
+      message: "Account created. Please verify your email.",
+    });
   } catch (err) {
     next(err);
   }
@@ -89,13 +86,15 @@ export const findOrCreateGoogleUser = async (profile) => {
     // 2. PRIORITY CHECK: Is this a manual account?
     // If google_id is NULL, they have a password and shouldn't use Google signup
     if (user.google_id === null) {
-       throw new Error("This email is already registered with a password. Please log in manually.");
+      throw new Error(
+        "This email is already registered with a password. Please log in manually.",
+      );
     }
 
     // 3. Status checks (Verified/Active)
     if (user.is_verified !== 1) throw new Error("NOT_VERIFIED");
     if (user.is_active === 0) throw new Error("DELETED_ACCOUNT");
-    
+
     return user.account_id;
   }
 
@@ -115,12 +114,15 @@ export const findOrCreateGoogleUser = async (profile) => {
       [accountId, _json.name, _json.picture],
     );
 
-    await connection.execute("INSERT INTO tb_gallery (account_id) VALUES (?)", [
-      accountId,
-    ]);
+    const [gallery] = await connection.execute(
+      "INSERT INTO tb_gallery (account_id) VALUES (?)",
+      [accountId],
+    );
+
+    const galleryId = gallery.insertId;
 
     await connection.commit();
-    return accountId;
+    return { accountId, galleryId };
   } catch (error) {
     await connection.rollback();
     throw error;
@@ -150,7 +152,7 @@ export const login = async (req, res, next) => {
     // 1. Fetch user - including google_id and status flags
     const [loginRows] = await req.db.query(
       "SELECT account_id, email, password, google_id, is_active, is_verified FROM tb_account WHERE email = ?",
-      [email]
+      [email],
     );
 
     if (loginRows.length === 0) {
@@ -168,34 +170,47 @@ export const login = async (req, res, next) => {
     // 3. VERIFY PASSWORD (Only for manual accounts)
     // If google_id is NULL, they signed up manually and MUST have a password
     if (!loginAccount.google_id) {
-      const isPasswordValid = await argon2.verify(loginAccount.password, password);
+      const isPasswordValid = await argon2.verify(
+        loginAccount.password,
+        password,
+      );
       if (!isPasswordValid) {
         return next(new AppError("Invalid email or password", 401));
       }
     } else if (!password && loginAccount.google_id) {
-        // If they try to manual login to a Google account without a password
-        return next(new AppError("This account uses Google Login. Please sign in with Google.", 401));
+      // If they try to manual login to a Google account without a password
+      return next(
+        new AppError(
+          "This account uses Google Login. Please sign in with Google.",
+          401,
+        ),
+      );
     }
 
     // 4. CHECK VERIFICATION
     if (loginAccount.is_verified === 0) {
-      return next(new AppError("Please verify your email before logging in.", 403));
+      return next(
+        new AppError("Please verify your email before logging in.", 403),
+      );
     }
 
     // 5. GENERATE PASSPORT-COMPATIBLE TOKENS
     // We allow Deactivated (2) users to get a token so they can reactivate themselves
-    const { accessToken, refreshToken } = generateTokens(loginAccount.account_id);
+    const { accessToken, refreshToken } = generateTokens(
+      loginAccount.account_id,
+    );
 
     await req.db.query(
       "UPDATE tb_account SET refresh_token = ? WHERE account_id = ?",
-      [refreshToken, loginAccount.account_id]
+      [refreshToken, loginAccount.account_id],
     );
 
     // 6. RESPONSE
     // If they are deactivated, we send a success status but a warning message
-    const message = loginAccount.is_active === 2 
-      ? "Login successful. Please reactivate your account to access all features." 
-      : "Login successful";
+    const message =
+      loginAccount.is_active === 2
+        ? "Login successful. Please reactivate your account to access all features."
+        : "Login successful";
 
     res.status(200).json({
       status: "success",
@@ -258,7 +273,7 @@ export const verifyEmail = async (req, res, next) => {
     const [rows] = await req.db.query(
       `SELECT account_id FROM tb_email_verifications
        WHERE verify_token = ? AND expires_at > NOW()`,
-      [token]
+      [token],
     );
 
     if (rows.length === 0) {
@@ -270,13 +285,13 @@ export const verifyEmail = async (req, res, next) => {
     // Mark verified
     await req.db.query(
       "UPDATE tb_account SET is_verified = 1 WHERE account_id = ?",
-      [accountId]
+      [accountId],
     );
 
     // Remove token
     await req.db.query(
       "DELETE FROM tb_email_verifications WHERE account_id = ?",
-      [accountId]
+      [accountId],
     );
 
     res.json({
@@ -287,7 +302,6 @@ export const verifyEmail = async (req, res, next) => {
     next(err);
   }
 };
-
 
 export const forgotPassword = async (req, res, next) => {
   try {

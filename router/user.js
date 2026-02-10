@@ -1,12 +1,14 @@
 import { Router } from "express";
-import { 
-  getProfile, 
-  updateProfile, 
-  deactivateAccount, 
-  reactivateAccount, 
-  deleteAccount     
+import {
+  getProfile,
+  updateProfile,
+  deactivateAccount,
+  reactivateAccount,
+  deleteAccount,
+  setAvatar,
 } from "../controller/user.js";
 import { protect } from "../middleware/index.js";
+import upload from "../helper/storage.js";
 
 const userRouter = Router();
 
@@ -17,12 +19,11 @@ const userRouter = Router();
 // DELETE /user/delete             -> Cascade delete all user records
 
 userRouter.use(protect);
-
 userRouter.get("/profile", getProfile);
+userRouter.post("/profile/avatar", upload.single("avatar"), setAvatar);
 userRouter.patch("/profile", updateProfile);
-
 userRouter.patch("/deactivate", deactivateAccount);
 userRouter.patch("/reactivate", reactivateAccount);
-userRouter.delete("/delete", deleteAccount);    
+userRouter.delete("/delete", deleteAccount);
 
 export default userRouter;

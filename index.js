@@ -10,14 +10,18 @@ import cookieParser from "cookie-parser";
 import errorHandler from "./middleware/errorHandler.js";
 import logger from "./helper/logger.js";
 import passport from "./helper/strategy.js";
+import path from "path";
 
 config();
 
 const app = express();
 
-// 1. Security Middleware
+// Security Middleware
 app.use(helmet()); // Secure HTTP headers
 app.use(cors()); // Allow Cross-Origin requests
+
+// serve uploads folder
+app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
 
 // Rate Limiting (Prevent Brute Force)
 const limiter = rateLimit({
