@@ -211,11 +211,11 @@ export const login = async (req, res, next) => {
     // If they are deactivated, we send a success status but a warning message
     const message =
       loginAccount.is_active === 2
-        ? "Login successful. Please reactivate your account to access all features."
-        : "Login successful";
+        ? "Please reactivate your account to access all features."
+        : "Please reactivate your account to access all features.";
 
     res.status(200).json({
-      status: "success",
+      status: "Account is deactivated",
       message,
       data: { accessToken, refreshToken },
     });
