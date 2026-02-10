@@ -19,11 +19,9 @@ export const loginSchema = z.object({
 export const setPasswordSchema = z.object({
   new_password: z
     .string()
-    .min(8, "Password must be at least 8 characters")
-    .regex(/[A-Z]/, "Include at least one uppercase letter")
-    .regex(/[0-9]/, "Include at least one number"),
+    .min(6, "Password must be at least 6 characters long"), // Minimum 6 characters
   confirm_password: z.string()
 }).refine((data) => data.new_password === data.confirm_password, {
   message: "Passwords do not match",
-  path: ["confirm_password"], // Targets the error to the confirm field
+  path: ["confirm_password"],
 });
