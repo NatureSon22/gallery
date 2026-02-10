@@ -19,7 +19,7 @@ const verifyGoogle = async (accessToken, refreshToken, profile, done) => {
     const { accountId, galleryId } = await findOrCreateGoogleUser(profile);
 
     // Create the tokens
-    const tokens = await createSession(accountId);
+    const tokens = await createSession(accountId, galleryId);
 
     const user = { account_id: accountId, gallery_id: galleryId };
 
@@ -45,7 +45,17 @@ const jwtOpt = {
 const verifyJwt = async (payload, done) => {
   try {
     const [rows] = await db.execute(
-      "SELECT account_id, email, is_active, is_verified FROM tb_account WHERE account_id = ?",
+      `SELECT 
+         a.account_id,
+         a.email,
+         a.is_active,
+         a.is_verified,
+         g.gallery_id
+       FROM tb_account a
+       LEFT JOIN tb_gallery g 
+         ON g.account_id = a.account_id
+       WHERE a.account_id = ?
+       LIMIT 1`,
       [payload.account_id],
     );
 

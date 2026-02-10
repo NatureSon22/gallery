@@ -22,6 +22,7 @@ export const protect = (req, res, next) => {
     // 3. Attach the user to the request
     // This ensures req.user.account_id is available in your controllers
     req.user = user;
+    console.log(user);
 
     next();
   })(req, res, next);

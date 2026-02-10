@@ -1,13 +1,13 @@
 import argon2 from "argon2";
-import passport from "passport";
 import jwt from "jsonwebtoken";
 import AppError from "../helper/AppError.js";
 import db from "../helper/db.js";
 import generateTokens from "../helper/generateToken.js";
 import crypto from "crypto";
-import { sendVerificationEmail, sendPasswordResetEmail } from "../helper/mailer.js";
-import { token } from "morgan";
-
+import {
+  sendVerificationEmail,
+  sendPasswordResetEmail,
+} from "../helper/mailer.js";
 
 // 1. SIGNUP CONTROLLER
 export const signup = async (req, res, next) => {
@@ -76,31 +76,40 @@ export const findOrCreateGoogleUser = async (profile) => {
   const { id, _json } = profile;
   const email = _json.email;
 
-  // 1. Check if the email exists in any form
-  const [existingUser] = await db.execute(
-    "SELECT account_id, google_id, is_active, is_verified FROM tb_account WHERE email = ?",
+  // Fetch account + gallery (if any)
+  const [rows] = await db.execute(
+    `SELECT 
+        a.account_id,
+        a.google_id,
+        a.is_active,
+        a.is_verified,
+        g.gallery_id
+     FROM tb_account a
+     LEFT JOIN tb_gallery g 
+       ON g.account_id = a.account_id
+     WHERE a.email = ?
+     LIMIT 1`,
     [email],
   );
 
-  if (existingUser.length > 0) {
-    const user = existingUser[0];
+  if (rows.length > 0) {
+    const user = rows[0];
 
-    // 2. PRIORITY CHECK: Is this a manual account?
-    // If google_id is NULL, they have a password and shouldn't use Google signup
+    // manual account check
     if (user.google_id === null) {
       throw new Error(
         "This email is already registered with a password. Please log in manually.",
       );
     }
 
-    // 3. Status checks (Verified/Active)
     if (user.is_verified !== 1) throw new Error("NOT_VERIFIED");
     if (user.is_active === 0) throw new Error("DELETED_ACCOUNT");
 
-    return user.account_id;
+    // IMPORTANT: always return same shape
+    return { accountId: user.account_id, galleryId: user.gallery_id ?? null };
   }
 
-  // Create User using a Transaction
+  // 2) Create User using a Transaction
   const connection = await db.getConnection();
   try {
     await connection.beginTransaction();
@@ -109,6 +118,7 @@ export const findOrCreateGoogleUser = async (profile) => {
       "INSERT INTO tb_account (email, google_id, is_verified) VALUES (?, ?, 1)",
       [email, id],
     );
+
     const accountId = account.insertId;
 
     await connection.execute(
@@ -133,8 +143,10 @@ export const findOrCreateGoogleUser = async (profile) => {
   }
 };
 
-export const createSession = async (accountId) => {
-  const tokens = generateTokens(accountId);
+export const createSession = async (accountId, galleryId) => {
+
+  
+  const tokens = generateTokens(accountId, galleryId);
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + 7);
 
@@ -153,7 +165,13 @@ export const login = async (req, res, next) => {
 
     // 1. Fetch user - including google_id and status flags
     const [loginRows] = await req.db.query(
-      "SELECT account_id, email, password, google_id, is_active, is_verified FROM tb_account WHERE email = ?",
+      `SELECT 
+         a.account_id, a.email, a.password, a.google_id, a.is_active, a.is_verified,
+         g.gallery_id
+       FROM tb_account a
+       LEFT JOIN tb_gallery g ON g.account_id = a.account_id
+       WHERE a.email = ?
+       LIMIT 1`,
       [email],
     );
 
@@ -200,6 +218,7 @@ export const login = async (req, res, next) => {
     // We allow Deactivated (2) users to get a token so they can reactivate themselves
     const { accessToken, refreshToken } = generateTokens(
       loginAccount.account_id,
+      loginAccount.gallery_id,
     );
 
     await req.db.query(
@@ -247,7 +266,7 @@ export const refreshToken = async (req, res, next) => {
     }
 
     // Generate new pair (Rotation)
-    const tokens = generateTokens(decoded.account_id);
+    const tokens = generateTokens(decoded.account_id, decoded.gallery_id);
 
     // Update DB with new refresh token
     await req.db.query(
@@ -305,8 +324,6 @@ export const verifyEmail = async (req, res, next) => {
   }
 };
 
-
-
 export const forgotPassword = async (req, res, next) => {
   let resetToken = null; // ✅ DECLARED IN FUNCTION SCOPE
 
@@ -315,7 +332,7 @@ export const forgotPassword = async (req, res, next) => {
 
     const [users] = await req.db.query(
       "SELECT account_id, is_verified, is_active FROM tb_account WHERE email = ?",
-      [email]
+      [email],
     );
 
     if (users.length > 0) {
@@ -329,14 +346,14 @@ export const forgotPassword = async (req, res, next) => {
         // Remove old tokens
         await req.db.query(
           "DELETE FROM tb_password_resets WHERE account_id = ?",
-          [user.account_id]
+          [user.account_id],
         );
 
         // Insert new token
         await req.db.query(
           `INSERT INTO tb_password_resets (account_id, reset_token, expires_at)
            VALUES (?, ?, ?)`,
-          [user.account_id, resetToken, expiresAt]
+          [user.account_id, resetToken, expiresAt],
         );
 
         await sendPasswordResetEmail(email, resetToken);
@@ -348,18 +365,16 @@ export const forgotPassword = async (req, res, next) => {
     // ✅ ALWAYS RETURN SUCCESS
     res.status(200).json({
       status: "success",
-      message: "If an account with that email exists, a reset link has been sent.",
+      message:
+        "If an account with that email exists, a reset link has been sent.",
       ...(process.env.NODE_ENV === "development" && resetToken
         ? { debug: { resetToken } }
-        : {})
+        : {}),
     });
-
   } catch (err) {
     next(err);
   }
 };
-
-
 
 export const resetPassword = async (req, res, next) => {
   const connection = await req.db.getConnection();
@@ -369,7 +384,7 @@ export const resetPassword = async (req, res, next) => {
     const [rows] = await connection.execute(
       `SELECT account_id FROM tb_password_resets
        WHERE reset_token = ? AND expires_at > NOW()`,
-      [token]
+      [token],
     );
 
     if (rows.length === 0) {
@@ -386,17 +401,17 @@ export const resetPassword = async (req, res, next) => {
 
     await connection.execute(
       "UPDATE tb_account SET password = ? WHERE account_id = ?",
-      [hashedPassword, accountId]
+      [hashedPassword, accountId],
     );
 
     await connection.execute(
       "DELETE FROM tb_password_resets WHERE account_id = ?",
-      [accountId]
+      [accountId],
     );
 
     await connection.execute(
       "DELETE FROM tb_refresh_token WHERE account_id = ?",
-      [accountId]
+      [accountId],
     );
 
     await connection.commit();
@@ -425,19 +440,20 @@ export const setPassword = async (req, res, next) => {
     // 2. Update the DB
     const [result] = await req.db.query(
       "UPDATE tb_account SET password = ? WHERE account_id = ?",
-      [hashedPassword, account_id]
+      [hashedPassword, account_id],
     );
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ 
-        status: "fail", 
-        message: "Account not found." 
+      return res.status(404).json({
+        status: "fail",
+        message: "Account not found.",
       });
     }
 
     res.status(200).json({
       status: "success",
-      message: "Password set successfully. You can now login with your email and password."
+      message:
+        "Password set successfully. You can now login with your email and password.",
     });
   } catch (err) {
     next(err);
