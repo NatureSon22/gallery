@@ -228,16 +228,22 @@ export const login = async (req, res, next) => {
 
     // 6. RESPONSE
     // If they are deactivated, we send a success status but a warning message
-    const message =
-      loginAccount.is_active === 2
-        ? "Login successful. Please reactivate your account to access all features."
-        : "Login successful";
+    // 1. Handle Deactivated Case (Status 2)
+    if (loginAccount.is_active === 2) {
+      return res.status(403).json({
+        status: "fail", // Changed from "success"
+        message: "Account deactivated, please reactivate your account to access all features.",
+        data: { accessToken, refreshToken },
+      });
+    }
 
+    // 2. Handle Successful Case (Status 1)
     res.status(200).json({
       status: "success",
-      message,
+      message: "Login successful",
       data: { accessToken, refreshToken },
     });
+
   } catch (err) {
     next(err);
   }

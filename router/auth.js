@@ -9,7 +9,7 @@ import {
   verifyEmail,
   forgotPassword,
   resetPassword,
-  setPassword,
+  setPassword
 } from "../controller/auth.js";
 
 import {
