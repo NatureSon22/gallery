@@ -1,7 +1,15 @@
 import { Router } from "express";
 import passport from "../helper/strategy.js";
 import validate from "../middleware/validation.js";
-import { signup, login, refreshToken, verifyEmail } from "../controller/auth.js";
+import {
+  signup,
+  login,
+  refreshToken,
+  verifyEmail,
+  forgotPassword,
+  resetPassword
+} from "../controller/auth.js";
+
 import { signupSchema, signupQuerySchema, loginSchema } from "../schemas/auth.schema.js";
 
 
@@ -61,18 +69,12 @@ authRouter.get(
   }
 );
 
-// POST /auth/login
-authRouter.post(
-  "/login",
-  validate(loginSchema, "body"),
-  login
-);
+// Forgot Password
+authRouter.post("/forgot-password", forgotPassword);
 
-// POST /auth/refresh
-authRouter.post(
-  "/refresh",
-  refreshToken
-);
+// Reset Password
+authRouter.post("/reset-password", resetPassword);
+
 
 // POST /auth/login
 authRouter.post(
