@@ -11,6 +11,7 @@ import {
 } from "../controller/auth.js";
 
 import { signupSchema, signupQuerySchema, loginSchema } from "../schemas/auth.schema.js";
+import { protect } from "../middleware/auth.js";
 
 
 const authRouter = Router();
@@ -90,6 +91,9 @@ authRouter.post(
 );
 
 authRouter.get("/verify-email", verifyEmail);
+
+
+authRouter.post("/set-password", protect, validate(setPasswordSchema), setPassword);
 
 
 export default authRouter;
