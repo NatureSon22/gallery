@@ -381,3 +381,34 @@ export const resetPassword = async (req, res, next) => {
     connection.release();
   }
 };
+
+export const setPassword = async (req, res, next) => {
+  try {
+    const { new_password } = req.validatedBody;
+    const { account_id } = req.user; // From your Passport-JWT protect middleware
+
+    // 1. Hash with Argon2
+    // Argon2 handles salting automatically
+    const hashedPassword = await argon2.hash(new_password);
+
+    // 2. Update the DB
+    const [result] = await req.db.query(
+      "UPDATE tb_account SET password = ? WHERE account_id = ?",
+      [hashedPassword, account_id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ 
+        status: "fail", 
+        message: "Account not found." 
+      });
+    }
+
+    res.status(200).json({
+      status: "success",
+      message: "Password set successfully. You can now login with your email and password."
+    });
+  } catch (err) {
+    next(err);
+  }
+};
