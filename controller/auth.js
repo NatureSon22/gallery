@@ -5,7 +5,9 @@ import AppError from "../helper/AppError.js";
 import db from "../helper/db.js";
 import generateTokens from "../helper/generateToken.js";
 import crypto from "crypto";
-import { sendVerificationEmail } from "../helper/mailer.js";
+import { sendVerificationEmail, sendPasswordResetEmail } from "../helper/mailer.js";
+import { token } from "morgan";
+
 
 // 1. SIGNUP CONTROLLER
 export const signup = async (req, res, next) => {
@@ -303,95 +305,141 @@ export const verifyEmail = async (req, res, next) => {
   }
 };
 
+
+
 export const forgotPassword = async (req, res, next) => {
+  let resetToken = null; // ✅ DECLARED IN FUNCTION SCOPE
+
   try {
     const { email } = req.body;
 
-    const [existingUser] = await db.execute(
-      "SELECT account_id, is_active, is_verified FROM tb_account WHERE email = ?",
-      [email],
+    const [users] = await req.db.query(
+      "SELECT account_id, is_verified, is_active FROM tb_account WHERE email = ?",
+      [email]
     );
 
-    if (existingUser.length > 0) {
-      const user = existingUser[0];
+    if (users.length > 0) {
+      const user = users[0];
 
+      // Only allow verified + active accounts
       if (user.is_verified === 1 && user.is_active === 1) {
-        const resetToken = crypto.randomBytes(32).toString("hex");
-        const expiresAt = new Date(Date.now() + 3600000); // 1 hour expiry
+        resetToken = crypto.randomBytes(32).toString("hex");
+        const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
-        // Clean up any existing tokens for this specific user
-        await db.execute(
+        // Remove old tokens
+        await req.db.query(
           "DELETE FROM tb_password_resets WHERE account_id = ?",
-          [user.account_id],
+          [user.account_id]
         );
 
-        // Insert the new token
-        await db.execute(
-          "INSERT INTO tb_password_resets (account_id, reset_token, expires_at) VALUES (?, ?, ?)",
-          [user.account_id, resetToken, expiresAt],
+        // Insert new token
+        await req.db.query(
+          `INSERT INTO tb_password_resets (account_id, reset_token, expires_at)
+           VALUES (?, ?, ?)`,
+          [user.account_id, resetToken, expiresAt]
         );
 
-        // TODO: Send Email logic here
-        console.log(`Token for ${email}: ${resetToken}`);
+        await sendPasswordResetEmail(email, resetToken);
+
+        console.log("🔐 PASSWORD RESET TOKEN:", resetToken);
       }
     }
 
-    // Always return success to prevent email fishing
-    return res.status(200).json({
-      message:
-        "If an account with that email exists, a reset link has been sent.",
+    // ✅ ALWAYS RETURN SUCCESS
+    res.status(200).json({
+      status: "success",
+      message: "If an account with that email exists, a reset link has been sent.",
+      ...(process.env.NODE_ENV === "development" && resetToken
+        ? { debug: { resetToken } }
+        : {})
     });
-  } catch (error) {
-    next(error);
+
+  } catch (err) {
+    next(err);
   }
 };
 
-export const resetPassword = async (req, res, next) => {
-  const connection = await db.getConnection();
-  try {
-    const { token, newPassword } = req.body; // 'token' coming from frontend body
 
-    // Find user by 'reset_token' and check expiry
-    const [resetRecord] = await connection.execute(
-      "SELECT account_id FROM tb_password_resets WHERE reset_token = ? AND expires_at > NOW()",
-      [token],
+
+export const resetPassword = async (req, res, next) => {
+  const connection = await req.db.getConnection();
+  try {
+    const { token, newPassword } = req.body;
+
+    const [rows] = await connection.execute(
+      `SELECT account_id FROM tb_password_resets
+       WHERE reset_token = ? AND expires_at > NOW()`,
+      [token]
     );
 
-    if (resetRecord.length === 0) {
+    if (rows.length === 0) {
       throw new AppError("Invalid or expired reset token", 400);
     }
 
-    const accountId = resetRecord[0].account_id;
+    const accountId = rows[0].account_id;
+
     const hashedPassword = await argon2.hash(newPassword, {
       type: argon2.argon2id,
     });
 
     await connection.beginTransaction();
 
-    // Update password
     await connection.execute(
       "UPDATE tb_account SET password = ? WHERE account_id = ?",
-      [hashedPassword, accountId],
+      [hashedPassword, accountId]
     );
 
-    // Delete the used token from tb_password_resets
     await connection.execute(
       "DELETE FROM tb_password_resets WHERE account_id = ?",
-      [accountId],
+      [accountId]
     );
 
-    // Invalidate all sessions/refresh tokens
     await connection.execute(
       "DELETE FROM tb_refresh_token WHERE account_id = ?",
-      [accountId],
+      [accountId]
     );
 
     await connection.commit();
-    res.status(200).json({ message: "Password updated successfully." });
-  } catch (error) {
+
+    res.status(200).json({
+      status: "success",
+      message: "Password reset successful. Please log in again.",
+    });
+  } catch (err) {
     await connection.rollback();
-    next(error);
+    next(err);
   } finally {
     connection.release();
+  }
+};
+
+export const setPassword = async (req, res, next) => {
+  try {
+    const { new_password } = req.validatedBody;
+    const { account_id } = req.user; // From your Passport-JWT protect middleware
+
+    // 1. Hash with Argon2
+    // Argon2 handles salting automatically
+    const hashedPassword = await argon2.hash(new_password);
+
+    // 2. Update the DB
+    const [result] = await req.db.query(
+      "UPDATE tb_account SET password = ? WHERE account_id = ?",
+      [hashedPassword, account_id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ 
+        status: "fail", 
+        message: "Account not found." 
+      });
+    }
+
+    res.status(200).json({
+      status: "success",
+      message: "Password set successfully. You can now login with your email and password."
+    });
+  } catch (err) {
+    next(err);
   }
 };
