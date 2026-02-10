@@ -1,66 +1,94 @@
-import express, { json, urlencoded } from "express";
-import { config } from "dotenv";
+import express from "express";
+import dotenv from "dotenv";
 import helmet from "helmet";
-import morgan from "morgan";
-import { rateLimit } from "express-rate-limit"; // Requires: npm i express-rate-limit
-import router from "./router/index.js";
-import db from "./helper/db.js";
 import cors from "cors";
-import cookieParser from "cookie-parser";
-import errorHandler from "./middleware/errorHandler.js";
-import logger from "./helper/logger.js";
-import passport from "./helper/strategy.js";
-import path from "path";
 
-config();
+import authRouter from "./router/auth.js";
+import db from "./helper/db.js";
+import AppError from "./helper/AppError.js";
+
+// Load env
+dotenv.config();
 
 const app = express();
+const PORT = process.env.PORT || 8000;
 
-// Security Middleware
-app.use(helmet()); // Secure HTTP headers
-app.use(cors()); // Allow Cross-Origin requests
+/* ---------------------------------------------------
+ * SECURITY: HELMET
+ * --------------------------------------------------- */
+app.use(
+  helmet({
+    // Disable CSP for now (enable later when frontend is stable)
+    contentSecurityPolicy: false,
 
-// serve uploads folder
-app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
+    // Prevent clickjacking
+    frameguard: { action: "deny" },
 
-// Rate Limiting (Prevent Brute Force)
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
-  message: "Too many requests from this IP, please try again later",
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-app.use(limiter);
+    // Hide X-Powered-By
+    hidePoweredBy: true,
 
-// 2. Logging (Morgan piped to Winston)
-app.use(morgan("combined", { stream: logger.stream }));
+    // Force HTTPS (enable only in production with HTTPS)
+    hsts: process.env.NODE_ENV === "production",
+  })
+);
 
-// 3. Parsers
+/* ---------------------------------------------------
+ * CORS (adjust origins later)
+ * --------------------------------------------------- */
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  })
+);
+
+/* ---------------------------------------------------
+ * BODY PARSERS
+ * --------------------------------------------------- */
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: false }));
 
-// 4. Authentication (Passport)
-app.use(passport.initialize());
-
-// 5. Attach DB to Request
+/* ---------------------------------------------------
+ * DB CONNECTION PER REQUEST
+ * --------------------------------------------------- */
 app.use((req, res, next) => {
   req.db = db;
   next();
 });
-app.use(cors());
-app.use(json());
-app.use(cookieParser());
-app.use(urlencoded({ limit: "", extended: true }));
-app.use(passport.initialize());
 
-app.use("/api/v1", router);
+/* ---------------------------------------------------
+ * ROUTES
+ * --------------------------------------------------- */
+app.use("/api/v1/auth", authRouter);
 
-// 7. Error Handling
-app.use(errorHandler);
+/* ---------------------------------------------------
+ * 404 HANDLER
+ * --------------------------------------------------- */
+app.use((req, res, next) => {
+  next(new AppError(`Cannot find ${req.originalUrl}`, 404));
+});
 
-// Start Server
-const PORT = process.env.PORT || 8000;
+
+/* ---------------------------------------------------
+ * GLOBAL ERROR HANDLER
+ * --------------------------------------------------- */
+app.use((err, req, res, next) => {
+  console.error("🔥 ERROR:", err);
+
+  const statusCode = err.statusCode || 500;
+  const status = err.status || "error";
+
+  res.status(statusCode).json({
+    status,
+    message: err.message || "Internal Server Error",
+    ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
+  });
+});
+
+/* ---------------------------------------------------
+ * START SERVER
+ * --------------------------------------------------- */
 app.listen(PORT, () => {
-  logger.info(`Server is running on port: ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log("SMTP READY: Server is ready to send emails");
 });
