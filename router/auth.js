@@ -12,8 +12,8 @@ import {
 } from "../controller/auth.js";
 
 import { signupSchema, signupQuerySchema, loginSchema, setPasswordSchema } from "../schemas/auth.schema.js";
-// project1/router/auth.js
-import { protect } from "../middleware/auth.js";
+import { protect } from "../middleware/index.js";
+
 
 const authRouter = Router();
 
