@@ -7,12 +7,13 @@ import {
   refreshToken,
   verifyEmail,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  setPassword
 } from "../controller/auth.js";
 
-import { signupSchema, signupQuerySchema, loginSchema } from "../schemas/auth.schema.js";
+import { signupSchema, signupQuerySchema, loginSchema, setPasswordSchema } from "../schemas/auth.schema.js";
+// project1/router/auth.js
 import { protect } from "../middleware/auth.js";
-
 
 const authRouter = Router();
 
