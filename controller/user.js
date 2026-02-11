@@ -1,26 +1,28 @@
 import AppError from "../helper/AppError.js";
 
 // Get logged-in user's profile
+// controller/profile.js
+
 export const getProfile = async (req, res, next) => {
   try {
-    // Get account_id from decoded JWT
+    // req.user is populated by the 'protect' middleware (Passport-JWT)
     const { account_id } = req.user;
 
-     // Query account and profile data
     const [rows] = await req.db.query(
-      `SELECT a.email, a.is_verified, p.display_name, p.age, p.avatar_url 
-       FROM tb_account a 
-       JOIN tb_profile p ON a.account_id = p.account_id 
+      `SELECT 
+        a.email, 
+        p.display_name, 
+        p.age
+       FROM tb_account a
+       LEFT JOIN tb_profile p ON a.account_id = p.account_id
        WHERE a.account_id = ?`,
-      [account_id],
+      [account_id]
     );
 
-    // If no user found return 404 error
     if (rows.length === 0) {
-      return next(new AppError("User profile not found", 404));
+      return res.status(404).json({ status: "fail", message: "User not found" });
     }
 
-     // Send user profile data
     res.status(200).json({
       status: "success",
       data: rows[0],

@@ -19,10 +19,16 @@ const userRouter = Router();
 // DELETE /user/delete             -> Cascade delete all user records
 
 userRouter.use(protect);
+userRouter.post("/profile/avatar", upload.single("avatar"), setAvatar);
+
+
+
+
 
 userRouter.get("/profile", getProfile);
-userRouter.post("/profile/avatar", upload.single("avatar"), setAvatar);
 userRouter.patch("/profile", updateProfile);
+
+
 
 userRouter.patch("/deactivate", deactivateAccount);
 userRouter.patch("/reactivate", reactivateAccount);
