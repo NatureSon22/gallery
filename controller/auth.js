@@ -431,21 +431,25 @@ export const resetPassword = async (req, res, next) => {
   }
 };
 
+//set password
 export const setPassword = async (req, res, next) => {
   try {
+    // Get new password from validated request body
     const { new_password } = req.validatedBody;
-    const { account_id } = req.user; // From your Passport-JWT protect middleware
 
-    // 1. Hash with Argon2
-    // Argon2 handles salting automatically
+     // Get account_id from JWT middleware
+    const { account_id } = req.user;
+
+      // Hash the new password
     const hashedPassword = await argon2.hash(new_password);
 
-    // 2. Update the DB
+     // Update password in database
     const [result] = await req.db.query(
       "UPDATE tb_account SET password = ? WHERE account_id = ?",
       [hashedPassword, account_id],
     );
 
+    // If no rows updated, account does not exist
     if (result.affectedRows === 0) {
       return res.status(404).json({
         status: "fail",
