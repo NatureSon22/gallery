@@ -158,12 +158,12 @@ export const createSession = async (accountId, galleryId) => {
   return tokens;
 };
 
-// 2. LOGIN CONTROLLER
+//LOGIN CONTROLLER
 export const login = async (req, res, next) => {
   try {
     const { email, password } = req.validatedBody;
 
-    // 1. Fetch user - including google_id and status flags
+    // Fetch users - including google_id
     const [loginRows] = await req.db.query(
       `SELECT 
          a.account_id, a.email, a.password, a.google_id, a.is_active, a.is_verified,
@@ -181,14 +181,13 @@ export const login = async (req, res, next) => {
 
     const loginAccount = loginRows[0];
 
-    // 2. CHECK STATUS: DELETED (0)
-    // If status is 0, we act like the account doesn't exist for security
+    // if the account is deleted(0)
     if (loginAccount.is_active === 0) {
       return next(new AppError("Invalid email or password", 401));
     }
 
-    // 3. VERIFY PASSWORD (Only for manual accounts)
-    // If google_id is NULL, they signed up manually and MUST have a password
+    // verify passswords of account made from manual signup
+    // If google_id is null, they signed up manually and must have a password
     if (!loginAccount.google_id) {
       const isPasswordValid = await argon2.verify(
         loginAccount.password,
@@ -207,15 +206,15 @@ export const login = async (req, res, next) => {
       );
     }
 
-    // 4. CHECK VERIFICATION
+    // checks if the email is verified(1) or not(0)
     if (loginAccount.is_verified === 0) {
       return next(
         new AppError("Please verify your email before logging in.", 403),
       );
     }
 
-    // 5. GENERATE PASSPORT-COMPATIBLE TOKENS
-    // We allow Deactivated (2) users to get a token so they can reactivate themselves
+    // generate passport compatible tokens
+    // allow deactivated(2) users to get a token so they can reactivate
     const { accessToken, refreshToken } = generateTokens(
       loginAccount.account_id,
       loginAccount.gallery_id,
@@ -226,18 +225,16 @@ export const login = async (req, res, next) => {
       [refreshToken, loginAccount.account_id],
     );
 
-    // 6. RESPONSE
-    // If they are deactivated, we send a success status but a warning message
-    // 1. Handle Deactivated Case (Status 2)
+    // if the account is deactivated(2), send a fail and a warning message
     if (loginAccount.is_active === 2) {
       return res.status(403).json({
-        status: "fail", // Changed from "success"
+        status: "fail",
         message: "Account deactivated, please reactivate your account to access all features.",
         data: { accessToken, refreshToken },
       });
     }
 
-    // 2. Handle Successful Case (Status 1)
+    // successful login for active(1)
     res.status(200).json({
       status: "success",
       message: "Login successful",
@@ -249,7 +246,7 @@ export const login = async (req, res, next) => {
   }
 };
 
-// 3. REFRESH TOKEN CONTROLLER
+//REFRESH TOKEN CONTROLLER
 export const refreshToken = async (req, res, next) => {
   try {
     const { refreshToken: incomingToken } = req.body;
@@ -261,7 +258,7 @@ export const refreshToken = async (req, res, next) => {
     // Verify token signature
     const decoded = jwt.verify(incomingToken, process.env.JWT_REFRESH_SECRET);
 
-    // Check if token exists in DB (revocation check)
+    // Check if token exists in db
     const [userRows] = await req.db.query(
       "SELECT account_id, refresh_token FROM tb_account WHERE account_id = ?",
       [decoded.account_id],
@@ -271,10 +268,10 @@ export const refreshToken = async (req, res, next) => {
       return next(new AppError("Invalid refresh token", 403));
     }
 
-    // Generate new pair (Rotation)
+    // Generate new pair
     const tokens = generateTokens(decoded.account_id, decoded.gallery_id);
 
-    // Update DB with new refresh token
+    // Update db with new refresh token
     await req.db.query(
       "UPDATE tb_account SET refresh_token = ? WHERE account_id = ?",
       [tokens.refreshToken, decoded.account_id],

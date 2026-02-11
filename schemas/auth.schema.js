@@ -11,11 +11,14 @@ export const signupQuerySchema = z.object({
   plan: z.string().optional(),
 });
 
+
+//login schema
 export const loginSchema = z.object({
   email: z.string().email("Invalid email format"),
   password: z.string().min(1, "Password is required"),
 });
 
+//set password schema
 export const setPasswordSchema = z.object({
   new_password: z
     .string()
