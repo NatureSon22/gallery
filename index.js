@@ -73,7 +73,7 @@ app.use(passport.initialize());
 
 app.use("/api/v1", router);
 
-// 7. Error Handling
+// Error Handling
 app.use(errorHandler);
 
 // Start Server
