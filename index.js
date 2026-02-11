@@ -2,7 +2,8 @@ import express from "express";
 import dotenv from "dotenv";
 import helmet from "helmet";
 import cors from "cors";
-
+import morgan from "morgan";
+import logger from "./helper/logger.js";
 import authRouter from "./router/auth.js";
 import db from "./helper/db.js";
 import AppError from "./helper/AppError.js";
@@ -12,6 +13,7 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 8000;
+app.use(morgan("combined", { stream: logger.stream }));
 
 /* ---------------------------------------------------
  * SECURITY: HELMET
