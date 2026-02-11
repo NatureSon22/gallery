@@ -5,6 +5,14 @@ import cors from "cors";
 import logger from "./helper/logger.js";
 import { rateLimit } from "express-rate-limit";
 import db from "./helper/db.js";
+import path from "path";
+import morgan from "morgan";
+import passport from "./helper/strategy.js";
+import {json} from "express";
+import {urlencoded} from "express";
+import cookieParser from "cookie-parser";
+import router from "./router/index.js";
+import errorHandler from "./middleware/errorHandler.js";
 
 // Load env
 dotenv.config();
