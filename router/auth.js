@@ -9,7 +9,7 @@ import {
   verifyEmail,
   forgotPassword,
   resetPassword,
-  setPassword
+  setPassword,
 } from "../controller/auth.js";
 
 import {
@@ -22,21 +22,26 @@ import { protect } from "../middleware/index.js";
 
 const authRouter = Router();
 
-// POST   /auth/signup             -> Create tb_account + tb_profile
-// POST   /auth/login              -> Validate + Issue JWT & Refresh Token
-// GET    /auth/google             -> Passport Google Strategy
-// POST   /auth/forgot-password    -> Create tb_password_resets row + Email
-// POST   /auth/reset-password     -> Validate reset_token + Update tb_account.password
-// POST   /auth/refresh            -> Rotate refresh_token
-
-// POST /auth/signup
+/*
+  Public - Account creation & authentication
+  - signup -> create account/profile
+  - login  -> issue access + refresh tokens
+  - refresh-> rotate refresh token
+*/
 authRouter.post(
   "/signup",
   validate(signupSchema, "body"),
   validate(signupQuerySchema, "query"),
   signup,
 );
+authRouter.post("/login", validate(loginSchema, "body"), login);
+authRouter.post("/refresh", refreshToken);
 
+/*
+  OAuth (Google)
+  - GET /google         -> start OAuth
+  - GET /google/callback-> handle callback, return tokens (no session)
+*/
 authRouter.get(
   "/google",
   passport.authenticate("google", {
@@ -44,7 +49,6 @@ authRouter.get(
     session: false,
   }),
 );
-
 authRouter.get("/google/callback", (req, res, next) => {
   passport.authenticate("google", { session: false }, (err, user, info) => {
     // 1. Handle Errors (e.g., Database errors or "Email already registered")
@@ -64,7 +68,7 @@ authRouter.get("/google/callback", (req, res, next) => {
     }
 
     // 3. Success: Manual response with tokens
-    // 'user' here contains the { tokens } object returned from your verifyGoogle strategy
+    // 'user' here contains the { tokens } object returned from verifyGoogle strategy
     res.status(200).json({
       status: "success",
       message: "Login successful",
@@ -73,18 +77,12 @@ authRouter.get("/google/callback", (req, res, next) => {
   })(req, res, next);
 });
 
-// Forgot Password
+/*
+  Password / Verification
+  - forgot-password, reset-password, verify-email
+*/
 authRouter.post("/forgot-password", forgotPassword);
-
-// Reset Password
 authRouter.post("/reset-password", resetPassword);
-
-// POST /auth/login
-authRouter.post("/login", validate(loginSchema, "body"), login);
-
-// POST /auth/refresh
-authRouter.post("/refresh", refreshToken);
-
 authRouter.get("/verify-email", verifyEmail);
 
 authRouter.post(

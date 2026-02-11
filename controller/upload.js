@@ -54,9 +54,42 @@ export const uploadPhotos = async (req, res, next) => {
 };
 
 export const deletePhotos = async (req, res, next) => {
+  const connection = await req.db.getConnection();
   try {
+    const { gallery_id } = req.user;
     const { photo_ids } = req.body;
+
+    const ids = photo_ids.map((photo_id) => Number(photo_id));
+
+    if (ids.some((n) => !Number.isInteger(n))) {
+      throw new AppError("photo_ids must contain only positive integers", 400);
+    }
+
+    const placeholder = ids.map(() => "?").join(",");
+
+    await connection.beginTransaction();
+
+    const [result] = await connection.execute(
+      `DELETE FROM tb_photos 
+       WHERE gallery_id = ? AND photo_id IN (${placeholder})`,
+      [Number(gallery_id), ...ids],
+    );
+
+    if (!result || result.affectedRows === 0) {
+      throw new AppError("Failed to delete selected photos", 404);
+    }
+
+    await connection.commit();
+
+    res.status(200).json({
+      status: "success",
+      message: "Photos deleted successfully!",
+      data: { deleted: result.affectedRows },
+    });
   } catch (error) {
+    await connection.rollback();
     next(error);
+  } finally {
+    connection.release();
   }
 };
