@@ -54,7 +54,6 @@ authRouter.get(
 );
 authRouter.get("/google/callback", (req, res, next) => {
   passport.authenticate("google", { session: false }, (err, user, info) => {
-    // 1. Handle Errors (e.g., Database errors or "Email already registered")
     if (err) {
       return res.status(400).json({
         status: "error",
@@ -62,7 +61,7 @@ authRouter.get("/google/callback", (req, res, next) => {
       });
     }
 
-    // 2. Handle Authentication Failure (e.g., User denied access)
+    // Handle Authentication Failure (e.g., User denied access)
     if (!user) {
       return res.status(401).json({
         status: "fail",
@@ -72,7 +71,10 @@ authRouter.get("/google/callback", (req, res, next) => {
 
     // 3. Success: Manual response with tokens
     // 'user' here contains the { tokens } object returned from verifyGoogle strategy
-    res.redirect(`${process.env.FRONTEND_ORIGIN}`);
+    res.status(200).json({
+      status: "success",
+      data: { tokens: user.tokens },
+    });
   })(req, res, next);
 });
 

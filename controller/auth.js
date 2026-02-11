@@ -8,6 +8,7 @@ import {
   sendVerificationEmail,
   sendPasswordResetEmail,
 } from "../helper/mailer.js";
+import path from "path";
 
 // 1. SIGNUP CONTROLLER
 export const signup = async (req, res, next) => {
@@ -94,13 +95,6 @@ export const findOrCreateGoogleUser = async (profile) => {
 
   if (rows.length > 0) {
     const user = rows[0];
-
-    // manual account check
-    if (user.google_id === null) {
-      throw new Error(
-        "This email is already registered with a password. Please log in manually.",
-      );
-    }
 
     if (user.is_verified !== 1) throw new Error("NOT_VERIFIED");
     if (user.is_active === 0) throw new Error("DELETED_ACCOUNT");
@@ -219,6 +213,7 @@ export const login = async (req, res, next) => {
       loginAccount.gallery_id,
     );
 
+    // TODO: check this
     await req.db.query(
       "UPDATE tb_account SET refresh_token = ? WHERE account_id = ?",
       [refreshToken, loginAccount.account_id],
@@ -317,10 +312,8 @@ export const verifyEmail = async (req, res, next) => {
       [accountId],
     );
 
-    res.json({
-      status: "success",
-      message: "Email verified successfully",
-    });
+    const __dirname = path.resolve();
+    res.sendFile(path.join(__dirname, "/public/verified.html"));
   } catch (err) {
     next(err);
   }
@@ -436,13 +429,13 @@ export const setPassword = async (req, res, next) => {
     // Get new password from validated request body
     const { new_password } = req.validatedBody;
 
-     // Get account_id from JWT middleware
+    // Get account_id from JWT middleware
     const { account_id } = req.user;
 
-      // Hash the new password
+    // Hash the new password
     const hashedPassword = await argon2.hash(new_password);
 
-     // Update password in database
+    // Update password in database
     const [result] = await req.db.query(
       "UPDATE tb_account SET password = ? WHERE account_id = ?",
       [hashedPassword, account_id],

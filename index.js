@@ -8,8 +8,8 @@ import db from "./helper/db.js";
 import path from "path";
 import morgan from "morgan";
 import passport from "./helper/strategy.js";
-import {json} from "express";
-import {urlencoded} from "express";
+import { json } from "express";
+import { urlencoded } from "express";
 import cookieParser from "cookie-parser";
 import router from "./router/index.js";
 import errorHandler from "./middleware/errorHandler.js";
@@ -48,6 +48,7 @@ app.use(
 
 // serve uploads folder
 app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
+app.use("/public", express.static(path.resolve(process.cwd(), "public")));
 
 // Rate Limiting (Prevent Brute Force)
 const limiter = rateLimit({

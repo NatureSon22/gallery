@@ -16,6 +16,7 @@ const transporter = nodemailer.createTransport({
 /**
  * Email Verification
  */
+// ...existing code...
 export const sendVerificationEmail = async (to, token) => {
   const link = `http://localhost:8000/api/v1/auth/verify-email?token=${token}`;
 
@@ -24,13 +25,35 @@ export const sendVerificationEmail = async (to, token) => {
     to,
     subject: "Verify your email",
     html: `
-      <h3>Email Verification</h3>
-      <p>Click the link below to verify your account:</p>
-      <a href="${link}">${link}</a>
-      <p>This link expires in 24 hours.</p>
+      <div style="font-family: Arial, Helvetica, sans-serif; color: #111; line-height: 1.4;">
+        <h3 style="margin-top:0">Email Verification</h3>
+        <p>Click the button below to verify your account:</p>
+        <p>
+          <a
+            href="${link}"
+            style="
+              display:inline-block;
+              padding:12px 20px;
+              background-color:#1a73e8;
+              color:#ffffff;
+              text-decoration:none;
+              border-radius:6px;
+              font-weight:600;
+            "
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Verify Email
+          </a>
+        </p>
+        <p style="margin:12px 0 0">Or open this link manually:</p>
+        <p style="word-break:break-all"><a href="${link}">${link}</a></p>
+        <p style="color:#555; font-size:0.9em">This link expires in 24 hours.</p>
+      </div>
     `,
   });
 };
+// ...existing code...
 
 /**
  * Password Reset Email

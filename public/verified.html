@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Email Verified • Aegis</title>
+    <style>
+      :root {
+        --bg: #f6f8fb;
+        --card: #fff;
+        --accent: #1a73e8;
+        --text: #0b1a2b;
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        font-family:
+          Inter,
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          "Helvetica Neue",
+          Arial;
+      }
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(180deg, #f3f6fb, #eef3fb);
+        color: var(--text);
+      }
+      .card {
+        background: var(--card);
+        padding: 28px;
+        border-radius: 12px;
+        box-shadow: 0 6px 24px rgba(11, 26, 43, 0.08);
+        max-width: 520px;
+        width: 92%;
+        text-align: center;
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 20px;
+      }
+      p {
+        margin: 0 0 18px;
+        color: #334155;
+      }
+      .ok {
+        display: inline-block;
+        background: linear-gradient(90deg, var(--accent), #1765d6);
+        color: #fff;
+        padding: 10px 18px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+      }
+      .meta {
+        margin-top: 14px;
+        font-size: 13px;
+        color: #64748b;
+      }
+      .icon {
+        width: 64px;
+        height: 64px;
+        margin: 0 auto 14px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(180deg, #e6f0ff, #dff0ff);
+      }
+      svg {
+        width: 34px;
+        height: 34px;
+        fill: none;
+        stroke: var(--accent);
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card" role="main" aria-labelledby="title">
+      <div class="icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M20 6L9 17l-5-5"></path>
+        </svg>
+      </div>
+
+      <h1 id="title">Your email has been verified</h1>
+      <p>
+        Thank you — your email address was successfully verified. You can now
+        sign in and start using your account.
+      </p>
+
+      <a class="ok" id="continue" href="http://localhost:5173/login">Log in</a>
+
+      <div class="meta">
+        If you were not expecting this email, please contact support.
+      </div>
+    </div>
+
+    <script>
+      // If the backend redirects here, you can override the "Go to app" link
+      // by replacing "/" with the frontend origin provided by the server:
+      (function () {
+        try {
+          const fallback = "http://localhost:5173/login";
+          const originHint =
+            document.currentScript?.getAttribute?.("data-origin") || null;
+          const link = document.getElementById("continue");
+          if (originHint) link.href = originHint;
+          // optional: if served with ?next=... use that
+          const params = new URLSearchParams(location.search);
+          const next = params.get("next");
+          if (next) link.href = next;
+          if (!link.href) link.href = fallback;
+        } catch (e) {}
+      })();
+    </script>
+  </body>
+</html>
