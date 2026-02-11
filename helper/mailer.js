@@ -1,4 +1,7 @@
 import nodemailer from "nodemailer";
+import { config } from "dotenv";
+
+config();
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -33,7 +36,7 @@ export const sendVerificationEmail = async (to, token) => {
  * Password Reset Email
  */
 export const sendPasswordResetEmail = async (to, token) => {
-  const link = `http://localhost:8000/api/v1/auth/reset-password?token=${token}`;
+  const link = `${process.env.FRONTEND_ORIGIN}/forgot-password/set-up-new-password?token=${token}&email=${to}`;
 
   await transporter.sendMail({
     from: `"Base Support" <${process.env.SMTP_USER}>`,
@@ -58,4 +61,3 @@ transporter.verify((error, success) => {
     console.log("SMTP READY: Server is ready to send emails");
   }
 });
-

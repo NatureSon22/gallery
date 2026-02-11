@@ -1,6 +1,9 @@
 import { Router } from "express";
 import passport from "../helper/strategy.js";
 import validate from "../middleware/validation.js";
+import { config } from "dotenv";
+
+config();
 
 import {
   signup,
@@ -69,11 +72,7 @@ authRouter.get("/google/callback", (req, res, next) => {
 
     // 3. Success: Manual response with tokens
     // 'user' here contains the { tokens } object returned from verifyGoogle strategy
-    res.status(200).json({
-      status: "success",
-      message: "Login successful",
-      data: user.tokens,
-    });
+    res.redirect(`${process.env.FRONTEND_ORIGIN}`);
   })(req, res, next);
 });
 

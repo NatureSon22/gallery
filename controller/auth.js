@@ -105,8 +105,9 @@ export const findOrCreateGoogleUser = async (profile) => {
     if (user.is_verified !== 1) throw new Error("NOT_VERIFIED");
     if (user.is_active === 0) throw new Error("DELETED_ACCOUNT");
 
-    // IMPORTANT: always return same shape
-    return { accountId: user.account_id, galleryId: user.gallery_id ?? null };
+    console.log(user);
+
+    return { accountId: user.account_id, galleryId: user.gallery_id };
   }
 
   // 2) Create User using a Transaction
@@ -144,8 +145,6 @@ export const findOrCreateGoogleUser = async (profile) => {
 };
 
 export const createSession = async (accountId, galleryId) => {
-
-  
   const tokens = generateTokens(accountId, galleryId);
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + 7);
@@ -229,7 +228,8 @@ export const login = async (req, res, next) => {
     if (loginAccount.is_active === 2) {
       return res.status(403).json({
         status: "fail",
-        message: "Account deactivated, please reactivate your account to access all features.",
+        message:
+          "Account deactivated, please reactivate your account to access all features.",
         data: { accessToken, refreshToken },
       });
     }
@@ -240,7 +240,6 @@ export const login = async (req, res, next) => {
       message: "Login successful",
       data: { accessToken, refreshToken },
     });
-
   } catch (err) {
     next(err);
   }

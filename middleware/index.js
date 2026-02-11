@@ -1,15 +1,13 @@
 import passport from "passport";
 import AppError from "../helper/AppError.js";
 
-// This replaces your manual jwt.verify logic
 export const protect = (req, res, next) => {
   passport.authenticate("jwt", { session: false }, (err, user, info) => {
-    // 1. Handle errors (like connection issues)
     if (err) {
       return next(err);
     }
 
-    // 2. Handle invalid or missing tokens
+    // Handle invalid or missing tokens
     if (!user) {
       return next(
         new AppError(
@@ -19,10 +17,9 @@ export const protect = (req, res, next) => {
       );
     }
 
-    // 3. Attach the user to the request
-    // This ensures req.user.account_id is available in your controllers
+    // Attach the user to the request
+    // user = { account_id, gallery_id }
     req.user = user;
-    console.log(user);
 
     next();
   })(req, res, next);

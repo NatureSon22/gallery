@@ -1,0 +1,22 @@
+{
+    "servers": {
+        "postman-api-mcp": {
+            "type": "stdio",
+            "command": "npx",
+            "args": [
+                "@postman/postman-mcp-server",
+                "--full" // (optional) Use this flag to enable full mode.
+            ],
+            "env": {
+                "POSTMAN_API_KEY": ""
+            }
+        }
+    },
+    "inputs": [
+        {
+            "id": "postman-api-key",
+            "type": "promptString",
+            "description": "Enter your Postman API key"
+        }
+    ]
+}
