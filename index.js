@@ -1,9 +1,9 @@
 import express from "express";
 import dotenv from "dotenv";
 import helmet from "helmet";
-import morgan from "morgan";
+import cors from "cors";
+import logger from "./helper/logger.js";
 import { rateLimit } from "express-rate-limit";
-import router from "./router/index.js";
 import db from "./helper/db.js";
 
 // Load env
