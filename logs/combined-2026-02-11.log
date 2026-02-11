@@ -1,0 +1,25 @@
+{"level":"info","message":"🚀 Server starting...","timestamp":"2026-02-11T01:58:55.600Z"}
+{"level":"warn","message":"⚠️ Logger warning test","timestamp":"2026-02-11T01:58:55.606Z"}
+{"level":"error","message":"❌ Logger error test","timestamp":"2026-02-11T01:58:55.609Z"}
+{"level":"info","message":"🚀 Server starting...","timestamp":"2026-02-11T01:58:57.197Z"}
+{"level":"warn","message":"⚠️ Logger warning test","timestamp":"2026-02-11T01:58:57.207Z"}
+{"level":"error","message":"❌ Logger error test","timestamp":"2026-02-11T01:58:57.208Z"}
+{"level":"info","message":"🚀 Server starting...","timestamp":"2026-02-11T01:59:52.089Z"}
+{"level":"warn","message":"⚠️ Logger warning test","timestamp":"2026-02-11T01:59:52.092Z"}
+{"level":"error","message":"❌ Logger error test","timestamp":"2026-02-11T01:59:52.093Z"}
+{"level":"info","message":"🚀 Server starting...","timestamp":"2026-02-11T02:06:57.380Z"}
+{"level":"warn","message":"⚠️ Logger warning test","timestamp":"2026-02-11T02:06:57.385Z"}
+{"level":"error","message":"❌ Logger error test","timestamp":"2026-02-11T02:06:57.385Z"}
+{"level":"info","message":"🚀 Server starting...","timestamp":"2026-02-11T02:07:43.770Z"}
+{"level":"warn","message":"⚠️ Logger warning test","timestamp":"2026-02-11T02:07:43.774Z"}
+{"level":"error","message":"❌ Logger error test","timestamp":"2026-02-11T02:07:43.775Z"}
+{"level":"info","message":"Test route hit","timestamp":"2026-02-11T02:13:22.677Z"}
+{"level":"info","message":"::1 - - [11/Feb/2026:02:13:22 +0000] \"GET /test-log HTTP/1.1\" 200 15 \"-\" \"curl/8.17.0\"","timestamp":"2026-02-11T02:13:22.686Z"}
+{"level":"info","message":"🚀 Server starting...","timestamp":"2026-02-11T02:22:01.581Z"}
+{"level":"warn","message":"⚠️ Logger warning test","timestamp":"2026-02-11T02:22:01.584Z"}
+{"level":"error","message":"❌ Logger error test","timestamp":"2026-02-11T02:22:01.585Z"}
+{"level":"info","message":"::1 - - [11/Feb/2026:02:26:07 +0000] \"GET /crash HTTP/1.1\" 500 1063 \"-\" \"curl/8.17.0\"","timestamp":"2026-02-11T02:26:07.850Z"}
+{"level":"info","message":"🚀 Server starting...","timestamp":"2026-02-11T02:40:00.077Z"}
+{"level":"warn","message":"⚠️ Logger warning test","timestamp":"2026-02-11T02:40:00.080Z"}
+{"level":"error","message":"❌ Logger error test","timestamp":"2026-02-11T02:40:00.080Z"}
+{"level":"info","message":"::1 - - [11/Feb/2026:02:50:01 +0000] \"POST /api/v1/auth/login HTTP/1.1\" 200 435 \"-\" \"PostmanRuntime/7.39.1\"","timestamp":"2026-02-11T02:50:01.978Z"}
