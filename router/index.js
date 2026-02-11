@@ -9,7 +9,7 @@ const routes = [
     router: authRouter,
   },
   {
-    path: "/user",
+    path: "/user", 
     router: userRouter,
   },
   {
