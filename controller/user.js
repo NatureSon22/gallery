@@ -88,15 +88,16 @@ export const setAvatar = async (req, res, next) => {
   }
 };
 
-// 1. DEACTIVATE (Set is_active = 2)
+// deactivate(2)
 export const deactivateAccount = async (req, res, next) => {
   try {
-    // req.user.account_id comes from your 'protect' middleware
+    // Update account status using account_id from JWT
     const [result] = await req.db.query(
       "UPDATE tb_account SET is_active = 2 WHERE account_id = ?",
       [req.user.account_id],
     );
 
+    // If no rows updated, account does not exist
     if (result.affectedRows === 0) {
       return next(new AppError("Account not found", 404));
     }
@@ -111,14 +112,16 @@ export const deactivateAccount = async (req, res, next) => {
   }
 };
 
-// 2. REACTIVATE (Set is_active = 1)
+// reactivate(1)
 export const reactivateAccount = async (req, res, next) => {
   try {
+    // Update account status using account_id from JWT
     const [result] = await req.db.query(
       "UPDATE tb_account SET is_active = 1 WHERE account_id = ?",
       [req.user.account_id],
     );
 
+    // If no rows updated, account does not exist
     if (result.affectedRows === 0)
       return next(new AppError("Account not found", 404));
 
@@ -131,16 +134,16 @@ export const reactivateAccount = async (req, res, next) => {
   }
 };
 
-// 3. DELETE (Set is_active = 0 - Soft Delete)
-// Add this to controller/user.js
+// delete(0)
 export const deleteAccount = async (req, res, next) => {
   try {
-    // Soft delete: set status to 0 and clear refresh token
+    //soft delete, set is_active to 0, delete refreshToken(to invalidate sessions)
     const [result] = await req.db.query(
       "UPDATE tb_account SET is_active = 0, refresh_token = NULL WHERE account_id = ?",
       [req.user.account_id],
     );
 
+    // If no rows updated, account does not exist
     if (result.affectedRows === 0) {
       return next(new AppError("Account not found", 404));
     }
