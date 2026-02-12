@@ -62,7 +62,7 @@ export const signup = async (req, res, next) => {
     );
 
     // Send email
-    //await sendVerificationEmail(email, verifyToken);
+    await sendVerificationEmail(email, verifyToken);
 
     res.status(201).json({
       status: "success",
