@@ -16,7 +16,6 @@ const transporter = nodemailer.createTransport({
 /**
  * Email Verification
  */
-// ...existing code...
 export const sendVerificationEmail = async (to, token) => {
   const link = `http://localhost:8000/api/v1/auth/verify-email?token=${token}`;
 
@@ -46,35 +45,50 @@ export const sendVerificationEmail = async (to, token) => {
             Verify Email
           </a>
         </p>
-        <p style="margin:12px 0 0">Or open this link manually:</p>
-        <p style="word-break:break-all"><a href="${link}">${link}</a></p>
         <p style="color:#555; font-size:0.9em">This link expires in 24 hours.</p>
       </div>
     `,
   });
 };
-// ...existing code...
 
 /**
  * Password Reset Email
  */
 export const sendPasswordResetEmail = async (to, token) => {
-  const link = `${process.env.FRONTEND_ORIGIN}/forgot-password/set-up-new-password?token=${token}&email=${to}`;
+  const FRONTEND = (
+    process.env.FRONTEND_ORIGIN || "http://localhost:5173"
+  ).replace(/\/$/, "");
+  const link = `${FRONTEND}/forgot-password/set-up-new-password?token=${encodeURIComponent(token)}&email=${encodeURIComponent(to)}`;
 
-  await transporter.sendMail({
-    from: `"Base Support" <${process.env.SMTP_USER}>`,
-    to,
-    subject: "Reset your password",
-    html: `
+  const html = `
+    <div style="font-family: Arial, Helvetica, sans-serif; color: #111; line-height: 1.4;">
       <h3>Password Reset</h3>
-      <p>You requested a password reset.</p>
-      <p>Click the link below to reset your password:</p>
-      <a href="${link}">${link}</a>
-      <p>This link expires in 1 hour.</p>
-      <br/>
-      <p>If you did not request this, you can safely ignore this email.</p>
-    `,
-  });
+      <p>You requested a password reset. Click the button below to reset your password:</p>
+      <p>
+        <a
+          href="${link}"
+          style="display:inline-block;padding:12px 20px;background-color:#1a73e8;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;"
+          target="_blank" rel="noopener noreferrer"
+        >
+          Reset Password
+        </a>
+      </p>
+      <p style="margin-top:12px;word-break:break-all"><a href="${link}">${link}</a></p>
+      <p style="color:#555;font-size:0.9em">This link expires in 1 hour.</p>
+    </div>
+  `;
+
+  try {
+    return await transporter.sendMail({
+      from: `"Base Support" <${process.env.SMTP_USER}>`,
+      to,
+      subject: "Reset your password",
+      html,
+    });
+  } catch (err) {
+    console.error("Failed to send reset email:", err);
+    throw err;
+  }
 };
 
 transporter.verify((error, success) => {
