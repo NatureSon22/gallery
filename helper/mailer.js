@@ -1,7 +1,10 @@
 import nodemailer from "nodemailer";
 import { config } from "dotenv";
+import { Resend } from "resend";
 
 config();
+
+const resend = new Resend(process.env.RESEND_KEY);
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -20,12 +23,12 @@ const transporter = nodemailer.createTransport({
 export const sendVerificationEmail = async (to, token) => {
   const link = `http://localhost:8000/api/v1/auth/verify-email?token=${token}`;
 
-  await transporter.sendMail({
-    from: `"Base" <${process.env.SMTP_USER}>`,
-    to,
-    subject: "Verify your email",
+  const { data, error } = await resend.emails.send({
+    from: "GALLERY API",
+    to: [to],
+    subject: "Verify Email",
     html: `
-      <div style="font-family: Arial, Helvetica, sans-serif; color: #111; line-height: 1.4;">
+       <div style="font-family: Arial, Helvetica, sans-serif; color: #111; line-height: 1.4;">
         <h3 style="margin-top:0">Email Verification</h3>
         <p>Click the button below to verify your account:</p>
         <p>
@@ -52,6 +55,45 @@ export const sendVerificationEmail = async (to, token) => {
       </div>
     `,
   });
+
+  if (error) {
+    return console.error({ error });
+  }
+
+  console.log({ data });
+
+  // await transporter.sendMail({
+  //   from: `"Base" <${process.env.SMTP_USER}>`,
+  //   to,
+  //   subject: "Verify your email",
+  //   html: `
+  //     <div style="font-family: Arial, Helvetica, sans-serif; color: #111; line-height: 1.4;">
+  //       <h3 style="margin-top:0">Email Verification</h3>
+  //       <p>Click the button below to verify your account:</p>
+  //       <p>
+  //         <a
+  //           href="${link}"
+  //           style="
+  //             display:inline-block;
+  //             padding:12px 20px;
+  //             background-color:#1a73e8;
+  //             color:#ffffff;
+  //             text-decoration:none;
+  //             border-radius:6px;
+  //             font-weight:600;
+  //           "
+  //           target="_blank"
+  //           rel="noopener noreferrer"
+  //         >
+  //           Verify Email
+  //         </a>
+  //       </p>
+  //       <p style="margin:12px 0 0">Or open this link manually:</p>
+  //       <p style="word-break:break-all"><a href="${link}">${link}</a></p>
+  //       <p style="color:#555; font-size:0.9em">This link expires in 24 hours.</p>
+  //     </div>
+  //   `,
+  // });
 };
 // ...existing code...
 
