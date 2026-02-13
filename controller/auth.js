@@ -190,14 +190,14 @@ export const login = async (req, res, next) => {
     );
 
     if (loginRows.length === 0) {
-      return next(new AppError("Invalid email or password", 401));
+      return next(new AppError("Invalid credentials", 401));
     }
 
     const loginAccount = loginRows[0];
 
     // if the account is deleted(0)
     if (loginAccount.is_active === 0) {
-      return next(new AppError("Invalid email or password", 401));
+      return next(new AppError("Invalid credentials", 401));
     }
 
     // verify passswords of account made from manual signup
@@ -208,7 +208,7 @@ export const login = async (req, res, next) => {
         password,
       );
       if (!isPasswordValid) {
-        return next(new AppError("Invalid email or password", 401));
+        return next(new AppError("Invalid credentials", 401));
       }
     } else if (!password && loginAccount.google_id) {
       // If they try to manual login to a Google account without a password
