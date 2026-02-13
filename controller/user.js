@@ -10,17 +10,20 @@ export const getProfile = async (req, res, next) => {
 
     const [rows] = await req.db.query(
       `SELECT 
+        p.avatar_url,
         a.email, 
         p.display_name, 
         p.age
        FROM tb_account a
        LEFT JOIN tb_profile p ON a.account_id = p.account_id
        WHERE a.account_id = ?`,
-      [account_id]
+      [account_id],
     );
 
     if (rows.length === 0) {
-      return res.status(404).json({ status: "fail", message: "User not found" });
+      return res
+        .status(404)
+        .json({ status: "fail", message: "User not found" });
     }
 
     res.status(200).json({

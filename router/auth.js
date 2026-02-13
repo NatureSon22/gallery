@@ -1,9 +1,6 @@
 import { Router } from "express";
 import passport from "../helper/strategy.js";
 import validate from "../middleware/validation.js";
-import { config } from "dotenv";
-
-config();
 
 import {
   signup,
@@ -13,6 +10,7 @@ import {
   forgotPassword,
   resetPassword,
   setPassword,
+  getLoggedInUser,
 } from "../controller/auth.js";
 
 import {
@@ -52,31 +50,56 @@ authRouter.get(
     session: false,
   }),
 );
+
 authRouter.get("/google/callback", (req, res, next) => {
-  passport.authenticate("google", { session: false }, (err, user, info) => {
+  const FRONTEND = (
+    process.env.FRONTEND_ORIGIN || "http://localhost:5173"
+  ).replace(/\/$/, "");
+  passport.authenticate("google", { session: false }, (err, payload, info) => {
     if (err) {
-      return res.status(400).json({
-        status: "error",
-        message: err.message,
+      return res.redirect(
+        `${FRONTEND}/?error=${encodeURIComponent(err.message || "auth_error")}`,
+      );
+    }
+
+    if (!payload) {
+      return res.redirect(
+        `${FRONTEND}/?error=${encodeURIComponent(info?.message || "Google authentication failed")}`,
+      );
+    }
+
+    const { tokens } = payload;
+    const accessToken = tokens?.accessToken;
+    const refreshToken = tokens?.refreshToken;
+
+    const isProd = process.env.NODE_ENV === "production";
+    const sameSite = isProd ? "none" : "lax";
+
+    if (accessToken) {
+      res.cookie("access_token", accessToken, {
+        httpOnly: true,
+        secure: isProd,
+        sameSite,
+        maxAge: 15 * 60 * 1000, // 15 minutes
+        path: "/",
       });
     }
 
-    // Handle Authentication Failure (e.g., User denied access)
-    if (!user) {
-      return res.status(401).json({
-        status: "fail",
-        message: info?.message || "Google authentication failed",
+    if (refreshToken) {
+      res.cookie("refresh_token", refreshToken, {
+        httpOnly: true,
+        secure: isProd,
+        sameSite,
+        path: "/api/v1/auth/refresh", // only send to this endpoint
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
     }
 
-    // 3. Success: Manual response with tokens
-    // 'user' here contains the { tokens } object returned from verifyGoogle strategy
-    res.status(200).json({
-      status: "success",
-      data: { tokens: user.tokens },
-    });
+    return res.redirect(FRONTEND);
   })(req, res, next);
 });
+
+authRouter.get("/me", protect, getLoggedInUser);
 
 /*
   Password / Verification

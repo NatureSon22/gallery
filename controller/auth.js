@@ -32,10 +32,11 @@ export const signup = async (req, res, next) => {
     });
 
     // Insert account
-    const [accountResult] = await req.db.query(
-      "INSERT INTO tb_account (email, password, created_at) VALUES (?, ?, NOW())",
-      [email, hashedPassword],
-    );
+    const [accountResult] = await req.db.query("INSERT INTO tb_account SET ?", {
+      email,
+      password: hashedPassword,
+      created_at: new Date(),
+    });
 
     const accountId = accountResult.insertId;
 
@@ -151,6 +152,26 @@ export const createSession = async (accountId, galleryId) => {
   return tokens;
 };
 
+export const getLoggedInUser = async (req, res) => {
+  res.status(200).json({ status: "success", data: req.user });
+};
+
+export const getTokens = (req, res, next) => {
+  try {
+    const accessToken = req.cookies?.access_token || null;
+    const refreshToken = req.cookies?.refresh_token | null;
+
+    if (!accessToken && !refreshToken)
+      throw new AppError("No tokens available", 401);
+
+    res
+      .status(200)
+      .json({ status: "success", data: { accessToken, refreshToken } });
+  } catch (error) {
+    next(error);
+  }
+};
+
 //LOGIN CONTROLLER
 export const login = async (req, res, next) => {
   try {
@@ -214,10 +235,6 @@ export const login = async (req, res, next) => {
     );
 
     // TODO: check this
-    await req.db.query(
-      "UPDATE tb_account SET refresh_token = ? WHERE account_id = ?",
-      [refreshToken, loginAccount.account_id],
-    );
 
     // if the account is deactivated(2), send a fail and a warning message
     if (loginAccount.is_active === 2) {
@@ -225,9 +242,13 @@ export const login = async (req, res, next) => {
         status: "fail",
         message:
           "Account deactivated, please reactivate your account to access all features.",
-        data: { accessToken, refreshToken },
       });
     }
+
+    await req.db.query(
+      "UPDATE tb_account SET refresh_token = ? WHERE account_id = ?",
+      [refreshToken, loginAccount.account_id],
+    );
 
     // successful login for active(1)
     res.status(200).json({

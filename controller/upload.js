@@ -59,6 +59,9 @@ export const deletePhotos = async (req, res, next) => {
     const { gallery_id } = req.user;
     const { photo_ids } = req.body;
 
+    console.log(gallery_id);
+    console.log(photo_ids);
+
     const ids = photo_ids.map((photo_id) => Number(photo_id));
 
     if (ids.some((n) => !Number.isInteger(n))) {

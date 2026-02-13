@@ -8,7 +8,6 @@ import { deletePhotosSchema } from "../schemas/upload.schema.js";
 const uploadRouter = Router();
 
 uploadRouter.use(protect);
-uploadRouter.get("/", getPhotos);
 uploadRouter.post("/single", upload.single("photo"), (req, res, next) => {
   req.files = req.file ? [req.file] : [];
   return uploadPhotos(req, res, next);

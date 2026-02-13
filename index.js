@@ -1,5 +1,5 @@
+import "dotenv/config";
 import express from "express";
-import dotenv from "dotenv";
 import helmet from "helmet";
 import cors from "cors";
 import logger from "./helper/logger.js";
@@ -14,19 +14,19 @@ import cookieParser from "cookie-parser";
 import router from "./router/index.js";
 import errorHandler from "./middleware/errorHandler.js";
 
-// Load env
-dotenv.config();
-
 const app = express();
-
+app.set("trust proxy", 1);
 // Security Middleware
 const isProd = process.env.NODE_ENV === "production";
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:5173";
 app.use(
   helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
     crossOriginEmbedderPolicy: false,
+    crossOriginOpenerPolicy: { policy: "same-origin" },
+    permittedCrossDomainPolicies: { permittedPolicies: "none" },
     hsts: isProd
-      ? { maxAge: 90 * 24 * 60 * 60, includeSubDomains: true, preload: false }
+      ? { maxAge: 90 * 24 * 60 * 60, includeSubDomains: true, preload: true }
       : false,
     contentSecurityPolicy: {
       useDefaults: true,
@@ -39,15 +39,10 @@ app.use(
     },
   }),
 ); // Secure HTTP headers
-app.use(
-  cors({
-    origin: true,
-    credentials: true,
-  }),
-); // Allow Cross-Origin requests
+app.use(cors()); // Allow Cross-Origin requests
 
 // serve uploads folder
-app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
+app.use("/uploads", express.static("uploads"));
 app.use("/public", express.static(path.resolve(process.cwd(), "public")));
 
 // Rate Limiting (Prevent Brute Force)
@@ -61,11 +56,11 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // Logging (Morgan piped to Winston)
-app.use(morgan("combined", { stream: logger.stream }));
+app.use(morgan("dev"));
 
 // Parsers
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: false, limit: "10mb" }));
 
 // Authentication (Passport)
 app.use(passport.initialize());
@@ -79,7 +74,6 @@ app.use(json());
 app.use(cookieParser());
 app.use(urlencoded({ limit: "", extended: true }));
 app.use(passport.initialize());
-
 app.use("/api/v1", router);
 
 // Error Handling
@@ -89,5 +83,4 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  console.log("SMTP READY: Server is ready to send emails");
 });
