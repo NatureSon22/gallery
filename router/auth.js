@@ -19,7 +19,8 @@ import {
   loginSchema,
   setPasswordSchema,
 } from "../schemas/auth.schema.js";
-import { protect } from "../middleware/index.js";
+import protect from "../middleware/protect.js";
+import setAuthCookies from "../helper/setAuthCookies.js";
 
 const authRouter = Router();
 
@@ -72,30 +73,10 @@ authRouter.get("/google/callback", (req, res, next) => {
     const accessToken = tokens?.accessToken;
     const refreshToken = tokens?.refreshToken;
 
-    const isProd = process.env.NODE_ENV === "production";
-    const sameSite = isProd ? "none" : "lax";
+    setAuthCookies(res, { accessToken, refreshToken });
 
-    if (accessToken) {
-      res.cookie("access_token", accessToken, {
-        httpOnly: true,
-        secure: isProd,
-        sameSite,
-        maxAge: 15 * 60 * 1000, // 15 minutes
-        path: "/",
-      });
-    }
-
-    if (refreshToken) {
-      res.cookie("refresh_token", refreshToken, {
-        httpOnly: true,
-        secure: isProd,
-        sameSite,
-        path: "/api/v1/auth/refresh", // only send to this endpoint
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      });
-    }
-
-    return res.redirect(FRONTEND);
+    // TODO: redirect to login
+    res.json({ message: "login successfull" });
   })(req, res, next);
 });
 

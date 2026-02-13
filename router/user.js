@@ -7,7 +7,7 @@ import {
   deleteAccount,
   setAvatar,
 } from "../controller/user.js";
-import { protect } from "../middleware/index.js";
+import protect from "../middleware/protect.js";
 import upload from "../helper/storage.js";
 
 const userRouter = Router();

@@ -1,86 +1,87 @@
 import "dotenv/config";
-import express from "express";
-import helmet from "helmet";
-import cors from "cors";
-import logger from "./helper/logger.js";
-import { rateLimit } from "express-rate-limit";
-import db from "./helper/db.js";
+import express, { json, urlencoded } from "express";
 import path from "path";
+import cors from "cors";
+import helmet from "helmet";
 import morgan from "morgan";
-import passport from "./helper/strategy.js";
-import { json } from "express";
-import { urlencoded } from "express";
 import cookieParser from "cookie-parser";
+import { rateLimit } from "express-rate-limit";
+
+// Local Imports
+import db from "./helper/db.js";
+import logger from "./helper/logger.js";
+import passport from "./helper/strategy.js";
 import router from "./router/index.js";
 import errorHandler from "./middleware/errorHandler.js";
 
 const app = express();
-app.set("trust proxy", 1);
-// Security Middleware
+const PORT = process.env.PORT || 8000;
 const isProd = process.env.NODE_ENV === "production";
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:5173";
-app.use(
-  helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" },
-    crossOriginEmbedderPolicy: false,
-    crossOriginOpenerPolicy: { policy: "same-origin" },
-    permittedCrossDomainPolicies: { permittedPolicies: "none" },
-    hsts: isProd
-      ? { maxAge: 90 * 24 * 60 * 60, includeSubDomains: true, preload: true }
-      : false,
-    contentSecurityPolicy: {
-      useDefaults: true,
-      directives: {
-        // allow same-origin + uploaded files served under /uploads, data URIs and any https image host
-        "img-src": ["'self'", "data:", "https:"],
-        // allow connections to your API, identity providers, or frontend (adjust exact hosts as required)
-        "connect-src": ["'self'", FRONTEND_ORIGIN, "https:"],
-      },
-    },
-  }),
-); // Secure HTTP headers
-app.use(cors()); // Allow Cross-Origin requests
 
-// serve uploads folder
+// --- 1. Settings & Security ---
+app.set("trust proxy", 1);
+
+// Helmet (Uncommented and cleaned up)
+// app.use(
+//   helmet({
+//     xPoweredBy: true,
+//     crossOriginResourcePolicy: { policy: "cross-origin" },
+//     crossOriginEmbedderPolicy: false,
+//     contentSecurityPolicy: {
+//       useDefaults: true,
+//       directives: {
+//         "img-src": ["'self'", "data:", "https:"],
+//         "connect-src": ["'self'", FRONTEND_ORIGIN, "https:"],
+//       },
+//     },
+//   })
+// );
+
+app.use(cookieParser());
+
+app.use(
+  cors({
+    origin: FRONTEND_ORIGIN,
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
+);
+
+// Rate Limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: "Too many requests from this IP, please try again later",
+});
+app.use("/api/", limiter); // Apply specifically to API routes
+
+// --- 2. Logging & Parsers ---
+app.use(morgan("dev"));
+app.use(json({ limit: "10mb" }));
+app.use(urlencoded({ extended: true, limit: "10mb" }));
+
+// --- 3. Static Files ---
 app.use("/uploads", express.static("uploads"));
 app.use("/public", express.static(path.resolve(process.cwd(), "public")));
 
-// Rate Limiting (Prevent Brute Force)
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
-  message: "Too many requests from this IP, please try again later",
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-app.use(limiter);
-
-// Logging (Morgan piped to Winston)
-app.use(morgan("dev"));
-
-// Parsers
-app.use(express.json());
-app.use(express.urlencoded({ extended: false, limit: "10mb" }));
-
-// Authentication (Passport)
-app.use(passport.initialize());
-
+// --- 4. Custom Context & Auth ---
 // Attach DB to Request
 app.use((req, res, next) => {
   req.db = db;
   next();
 });
-app.use(json());
-app.use(cookieParser());
-app.use(urlencoded({ limit: "", extended: true }));
+
 app.use(passport.initialize());
+
+// --- 5. Routes ---
 app.use("/api/v1", router);
 
-// Error Handling
+// --- 6. Error Handling (Must be last) ---
 app.use(errorHandler);
 
-// Start Server
-const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

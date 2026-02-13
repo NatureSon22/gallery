@@ -37,8 +37,14 @@ const verifyGoogle = async (accessToken, refreshToken, profile, done) => {
   }
 };
 
+const cookieExtractor = (req) => {
+  console.log("All Cookies:", req.cookies); // If this is undefined, cookie-parser isn't working
+  console.log("Token:", req.cookies?.access_token);
+  return req.cookies?.access_token || null;
+};
+
 const jwtOpt = {
-  jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+  jwtFromRequest: cookieExtractor,
   secretOrKey: process.env.JWT_SECRET,
 };
 
@@ -81,6 +87,6 @@ const verifyJwt = async (payload, done) => {
 };
 
 passport.use(new GoogleStrategy(googleOpt, verifyGoogle));
-passport.use(new JwtStrategy(jwtOpt, verifyJwt));
+// passport.use(new JwtStrategy(jwtOpt, verifyJwt));
 
 export default passport;

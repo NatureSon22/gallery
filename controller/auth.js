@@ -9,6 +9,7 @@ import {
   sendPasswordResetEmail,
 } from "../helper/mailer.js";
 import path from "path";
+import setAuthCookies from "../helper/setAuthCookies.js";
 
 // 1. SIGNUP CONTROLLER
 export const signup = async (req, res, next) => {
@@ -234,8 +235,6 @@ export const login = async (req, res, next) => {
       loginAccount.gallery_id,
     );
 
-    // TODO: check this
-
     // if the account is deactivated(2), send a fail and a warning message
     if (loginAccount.is_active === 2) {
       return res.status(403).json({
@@ -250,11 +249,51 @@ export const login = async (req, res, next) => {
       [refreshToken, loginAccount.account_id],
     );
 
+    //setAuthCookies(res, { accessToken, refreshToken });
+
+    const isProd = process.env.NODE_ENV === "production";
+
+    // sameSite controls when cookies are sent on cross-site requests:
+    // - "none": cookie is sent in all contexts (cross-site allowed). Modern browsers require Secure=true when using "none".
+    // - "lax": cookie is sent on top-level navigations (safe for most auth redirects) but NOT on most cross-site subrequests (good CSRF protection).
+    // - "strict": cookie is only sent for same-site requests (strictest CSRF protection; may break cross-site OAuth redirects).
+    const sameSite = isProd ? "none" : "lax";
+
+    // Short-lived access token cookie (sent to all routes)
+    if (accessToken) {
+      res.cookie("access_token", accessToken, {
+        httpOnly: true, // not accessible to JavaScript — defends against XSS
+        secure: false, // only send over HTTPS in production
+        sameSite: "none", // as defined above
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 15 minutes
+        path: "/", // cookie sent for all paths under the origin
+      });
+    }
+
+    // Long-lived refresh token cookie (scoped to refresh endpoint)
+    if (refreshToken) {
+      res.cookie("refresh_token", refreshToken, {
+        httpOnly: true,
+        secure: false,
+        sameSite: "none",
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        // path: controls which request paths the browser will include this cookie on.
+        // Example:
+        // - "/api/v1/auth/refresh" => browser sends cookie only when request path starts with that value.
+        // - "/" => browser sends cookie on all requests to the origin.
+        // Scoping refresh_token to the refresh endpoint reduces token exposure.
+        path: "/api/v1/auth/refresh",
+      });
+    }
+
+    console.log("test here: " + res.cookies?.access_token);
+
     // successful login for active(1)
+    // TODO: redirect to login
     res.status(200).json({
       status: "success",
       message: "Login successful",
-      data: { accessToken, refreshToken },
+      data: { userData: loginAccount },
     });
   } catch (err) {
     next(err);
@@ -291,6 +330,10 @@ export const refreshToken = async (req, res, next) => {
       "UPDATE tb_account SET refresh_token = ? WHERE account_id = ?",
       [tokens.refreshToken, decoded.account_id],
     );
+
+    setAuthCookies(res, { accessToken, refreshToken });
+
+    console.log("REFRESHED");
 
     res.status(200).json({
       status: "success",
@@ -341,7 +384,7 @@ export const verifyEmail = async (req, res, next) => {
 };
 
 export const forgotPassword = async (req, res, next) => {
-  let resetToken = null; // ✅ DECLARED IN FUNCTION SCOPE
+  let resetToken = null;
 
   try {
     const { email } = req.body;
@@ -378,7 +421,6 @@ export const forgotPassword = async (req, res, next) => {
       }
     }
 
-    // ✅ ALWAYS RETURN SUCCESS
     res.status(200).json({
       status: "success",
       message:
