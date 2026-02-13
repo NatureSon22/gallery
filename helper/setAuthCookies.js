@@ -22,8 +22,8 @@ const setAuthCookies = (res, tokens = {}) => {
   if (accessToken) {
     res.cookie("access_token", accessToken, {
       httpOnly: true, // not accessible to JavaScript — defends against XSS
-      secure: isProd, // only send over HTTPS in production
-      sameSite, // as defined above
+      secure: false, // only send over HTTPS in production
+      sameSite: "lax", // as defined above
       maxAge: 100, // 15 minutes
       path: "/", // cookie sent for all paths under the origin
     });
@@ -33,15 +33,15 @@ const setAuthCookies = (res, tokens = {}) => {
   if (refreshToken) {
     res.cookie("refresh_token", refreshToken, {
       httpOnly: true,
-      secure: isProd,
-      sameSite,
+      secure: false, // only send over HTTPS in production
+      sameSite: "lax", // as defined above
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       // path: controls which request paths the browser will include this cookie on.
       // Example:
       // - "/api/v1/auth/refresh" => browser sends cookie only when request path starts with that value.
       // - "/" => browser sends cookie on all requests to the origin.
       // Scoping refresh_token to the refresh endpoint reduces token exposure.
-      path: "/api/v1/auth/refresh",
+      path: "/",
     });
   }
 };

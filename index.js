@@ -22,6 +22,19 @@ const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:5173";
 // --- 1. Settings & Security ---
 app.set("trust proxy", 1);
 
+// ✅ CRITICAL: cookieParser MUST come before cors and other middleware
+app.use(cookieParser());
+
+// CORS Configuration
+app.use(
+  cors({
+    origin: FRONTEND_ORIGIN,
+    credentials: true,
+    // ✅ Remove allowedHeaders or add Cookie to it
+    // allowedHeaders: ["Content-Type", "Authorization"],
+  }),
+);
+
 // Helmet (Uncommented and cleaned up)
 // app.use(
 //   helmet({
@@ -38,16 +51,6 @@ app.set("trust proxy", 1);
 //   })
 // );
 
-app.use(cookieParser());
-
-app.use(
-  cors({
-    origin: FRONTEND_ORIGIN,
-    credentials: true,
-    allowedHeaders: ["Content-Type", "Authorization"],
-  }),
-);
-
 // Rate Limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -56,7 +59,7 @@ const limiter = rateLimit({
   legacyHeaders: false,
   message: "Too many requests from this IP, please try again later",
 });
-app.use("/api/", limiter); // Apply specifically to API routes
+//app.use("/api/", limiter);
 
 // --- 2. Logging & Parsers ---
 app.use(morgan("dev"));
@@ -68,7 +71,6 @@ app.use("/uploads", express.static("uploads"));
 app.use("/public", express.static(path.resolve(process.cwd(), "public")));
 
 // --- 4. Custom Context & Auth ---
-// Attach DB to Request
 app.use((req, res, next) => {
   req.db = db;
   next();
