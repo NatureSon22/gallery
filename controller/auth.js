@@ -86,7 +86,7 @@ export const findOrCreateGoogleUser = async (profile) => {
   const [rows] = await db.execute(
     `SELECT 
         a.account_id,
-        a.email
+        a.email,
         a.google_id,
         a.is_active,
         a.is_verified,
