@@ -77,7 +77,8 @@ authRouter.get("/google/callback", (req, res, next) => {
     setAuthCookies(res, { accessToken, refreshToken });
 
     // TODO: redirect to login
-    res.json({ message: "login successfull", data: account });
+    res.redirect(`${FRONTEND}/google-redirect`);
+    //res.json({ message: "login successfull", data: account });
   })(req, res, next);
 });
 

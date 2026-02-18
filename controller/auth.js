@@ -79,10 +79,14 @@ export const findOrCreateGoogleUser = async (profile) => {
   const { id, _json } = profile;
   const email = _json.email;
 
+  // a.account_id, a.email, a.password, a.google_id, a.is_active, a.is_verified,
+  //        g.gallery_id
+
   // Fetch account + gallery (if any)
   const [rows] = await db.execute(
     `SELECT 
         a.account_id,
+        a.email
         a.google_id,
         a.is_active,
         a.is_verified,
@@ -103,7 +107,11 @@ export const findOrCreateGoogleUser = async (profile) => {
 
     console.log(user);
 
-    return { accountId: user.account_id, galleryId: user.gallery_id, account: user };
+    return {
+      accountId: user.account_id,
+      galleryId: user.gallery_id,
+      account: user,
+    };
   }
 
   // 2) Create User using a Transaction

@@ -1,8 +1,7 @@
 const isProduction = process.env.NODE_ENV === "production";
+const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN;
 
 const helmetConfig = {
-  // --- (Most likely to need config) ---
-
   // 1. Content Security Policy (CSP)
   // - Purpose: Prevents injection-based attacks (XSS) by restricting where
   //   scripts, styles, images, fonts, and network requests can be loaded from.
@@ -15,7 +14,8 @@ const helmetConfig = {
     ? {
         useDefaults: true,
         directives: {
-          "script-src": ["'self'", "https://apis.google.com"],
+          "script-src": ["'self'", "https://apis.google.com", FRONTEND_ORIGIN],
+          "connect-src": ["'self'", FRONTEND_ORIGIN],
         },
       }
     : false,
@@ -48,14 +48,12 @@ const helmetConfig = {
   //   or a CSP frame-ancestors directive in production if you never embed.
   xFrameOptions: { action: isProduction ? "deny" : "sameorigin" },
 
-  // --- THE "CROSS-ORIGIN" TRIO (Isolation & Privacy) ---
-
   // 5. Cross-Origin-Embedder-Policy (COEP)
   // - Purpose: controls whether cross-origin resources can be embedded.
   // - "require-corp" forces cross-origin resources to provide explicit permission
   //   (via CORP/CORS headers). Required for certain browser features (e.g. SharedArrayBuffer).
   // - Enabling can break third-party embeds unless those hosts opt-in.
-  crossOriginEmbedderPolicy: isProduction ? { policy: "require-corp" } : false,
+  crossOriginEmbedderPolicy: isProduction ? { policy: "credentialless" } : false,
 
   // 6. Cross-Origin-Opener-Policy (COOP)
   // - Purpose: isolates window browsing contexts (tabs/windows) to separate processes.
@@ -68,8 +66,6 @@ const helmetConfig = {
   // - "same-origin" prevents other origins from embedding or fetching your resources,
   //   reducing data leakage. Loosen if you intentionally serve public assets to other sites.
   crossOriginResourcePolicy: { policy: "same-origin" },
-
-  // --- THE "SILENT GUARDIANS" (Usually safe to leave as default) ---
 
   // 8. Origin-Agent-Cluster
   // - Purpose: opts-in to a new process isolation model for web pages, which can

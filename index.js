@@ -26,7 +26,7 @@ app.use(cookieParser());
 // CORS Configuration
 app.use(cors(corsOptions));
 
-app.use(helmet(helmetConfig));
+//app.use(helmet(helmetConfig));
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,

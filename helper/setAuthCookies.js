@@ -25,7 +25,6 @@ const setAuthCookies = (res, tokens = {}) => {
       secure: false, // only send over HTTPS in production
       sameSite: "lax", // as defined above
       maxAge: 15 * 60 * 1000, // 15 minutes
-      path: "/", // cookie sent for all paths under the origin
     });
   }
 
@@ -41,7 +40,6 @@ const setAuthCookies = (res, tokens = {}) => {
       // - "/api/v1/auth/refresh" => browser sends cookie only when request path starts with that value.
       // - "/" => browser sends cookie on all requests to the origin.
       // Scoping refresh_token to the refresh endpoint reduces token exposure.
-      path: "/",
     });
   }
 };
