@@ -10,7 +10,7 @@ import {
   forgotPassword,
   resetPassword,
   setPassword,
-  getLoggedInUser
+  getLoggedInUser,
 } from "../controller/auth.js";
 
 import {
@@ -81,7 +81,6 @@ authRouter.get("/google/callback", (req, res, next) => {
 
     // TODO: redirect to login
     res.redirect(`${FRONTEND}/google-redirect`);
-    //res.json({ message: "login successfull", data: account });
   })(req, res, next);
 });
 
@@ -94,19 +93,19 @@ authRouter.get("/me", protect, getLoggedInUser);
 authRouter.post(
   "/forgot-password",
   validate(forgotPasswordSchema, "body"),
-  forgotPassword
+  forgotPassword,
 );
 
 authRouter.post(
   "/reset-password",
   validate(resetPasswordSchema, "body"),
-  resetPassword
+  resetPassword,
 );
 
 authRouter.get(
   "/verify-email",
   validate(verifyEmailSchema, "query"),
-  verifyEmail
+  verifyEmail,
 );
 
 authRouter.post(
