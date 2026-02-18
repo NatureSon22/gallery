@@ -14,38 +14,20 @@ import logger from "./helper/logger.js";
 import passport from "./helper/strategy.js";
 import router from "./router/index.js";
 import errorHandler from "./middleware/errorHandler.js";
+import helmetConfig from "./config/helmet.js";
 
 const app = express();
 const PORT = process.env.PORT || 8000;
-const isProd = process.env.NODE_ENV === "production";
-const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:5173";
 
-// --- 1. Settings & Security ---
 app.set("trust proxy", 1);
 
-// ✅ CRITICAL: cookieParser MUST come before cors and other middleware
 app.use(cookieParser());
 
 // CORS Configuration
 app.use(cors(corsOptions));
 
-// Helmet (Uncommented and cleaned up)
-// app.use(
-//   helmet({
-//     xPoweredBy: true,
-//     crossOriginResourcePolicy: { policy: "cross-origin" },
-//     crossOriginEmbedderPolicy: false,
-//     contentSecurityPolicy: {
-//       useDefaults: true,
-//       directives: {
-//         "img-src": ["'self'", "data:", "https:"],
-//         "connect-src": ["'self'", FRONTEND_ORIGIN, "https:"],
-//       },
-//     },
-//   })
-// );
+app.use(helmet(helmetConfig));
 
-// Rate Limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -53,14 +35,12 @@ const limiter = rateLimit({
   legacyHeaders: false,
   message: "Too many requests from this IP, please try again later",
 });
-//app.use("/api/", limiter);
+app.use("/api/", limiter);
 
-// --- 2. Logging & Parsers ---
 app.use(morgan("dev"));
 app.use(json({ limit: "10mb" }));
 app.use(urlencoded({ extended: true, limit: "10mb" }));
 
-// --- 3. Static Files ---
 app.use("/uploads", express.static("uploads"));
 app.use("/public", express.static(path.resolve(process.cwd(), "public")));
 

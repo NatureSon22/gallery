@@ -103,7 +103,7 @@ export const findOrCreateGoogleUser = async (profile) => {
 
     console.log(user);
 
-    return { accountId: user.account_id, galleryId: user.gallery_id };
+    return { accountId: user.account_id, galleryId: user.gallery_id, account: user };
   }
 
   // 2) Create User using a Transaction
@@ -131,7 +131,7 @@ export const findOrCreateGoogleUser = async (profile) => {
     const galleryId = gallery.insertId;
 
     await connection.commit();
-    return { accountId, galleryId };
+    return { accountId, galleryId, account };
   } catch (error) {
     await connection.rollback();
     throw error;
@@ -284,7 +284,7 @@ export const login = async (req, res, next) => {
         gallery_id: loginAccount.gallery_id,
         display_name: profile.display_name || null,
         age: profile.age || null,
-        avatar_url: profile.avatar_url || null, 
+        avatar_url: profile.avatar_url || null,
         is_active: loginAccount.is_active,
       },
     });
@@ -292,25 +292,10 @@ export const login = async (req, res, next) => {
     next(err);
   }
 };
-//REFRESH TOKEN CONTROLLER
-// ============================================
-// IN REFRESH TOKEN CONTROLLER (where token is received)
-// ============================================
+
 export const refreshToken = async (req, res, next) => {
-  console.log("\n🔄 ========== REFRESH TOKEN PROCESS STARTED ==========");
-  console.log("⏰ Timestamp:", new Date().toISOString());
-  console.log("📍 Endpoint: /auth/refresh");
-
   try {
-    // ============================================
-    // PHASE 1: EXTRACT TOKEN FROM COOKIES
-    // ============================================
-    console.log("\n📋 Phase 1: Extracting refresh token from cookies");
-    console.log("🌐 Raw Cookie Header:", req.headers.cookie);
-    console.log("🍪 Parsed Cookies:", req.cookies);
-
     const incomingToken = req.cookies?.refresh_token;
-    console.log("🔑 Refresh token found:", incomingToken ? "YES ✅" : "NO ❌");
 
     if (!incomingToken) {
       console.log("❌ ERROR: Refresh token missing in cookies");

@@ -37,7 +37,6 @@ authRouter.post(
   signup,
 );
 
-
 authRouter.post("/login", validate(loginSchema, "body"), login);
 authRouter.post("/refresh", refreshToken);
 
@@ -71,14 +70,14 @@ authRouter.get("/google/callback", (req, res, next) => {
       );
     }
 
-    const { tokens } = payload;
+    const { tokens, account } = payload;
     const accessToken = tokens?.accessToken;
     const refreshToken = tokens?.refreshToken;
 
     setAuthCookies(res, { accessToken, refreshToken });
 
     // TODO: redirect to login
-    res.json({ message: "login successfull" });
+    res.json({ message: "login successfull", data: account });
   })(req, res, next);
 });
 

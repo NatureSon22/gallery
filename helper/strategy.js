@@ -4,6 +4,7 @@ import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { config } from "dotenv";
 import db from "../helper/db.js";
 import { createSession, findOrCreateGoogleUser } from "../controller/auth.js";
+import setAuthCookies from "./setAuthCookies.js";
 
 config();
 
@@ -16,14 +17,17 @@ const googleOpt = {
 const verifyGoogle = async (accessToken, refreshToken, profile, done) => {
   try {
     // Identify the user
-    const { accountId, galleryId } = await findOrCreateGoogleUser(profile);
+    const { accountId, galleryId, account } =
+      await findOrCreateGoogleUser(profile);
+
+    console.log(`account: ${account}`);
 
     // Create the tokens
     const tokens = await createSession(accountId, galleryId);
 
     const user = { account_id: accountId, gallery_id: galleryId };
 
-    return done(null, { tokens, user });
+    return done(null, { tokens, user, account });
   } catch (error) {
     if (error.message === "NOT_VERIFIED") {
       return done(null, false, { message: "Account is not verified" });
@@ -38,7 +42,7 @@ const verifyGoogle = async (accessToken, refreshToken, profile, done) => {
 };
 
 const cookieExtractor = (req) => {
-  console.log("All Cookies:", req.cookies); // If this is undefined, cookie-parser isn't working
+  console.log("All Cookies:", req.cookies);
   console.log("Token:", req.cookies?.access_token);
   return req.cookies?.access_token || null;
 };
@@ -87,6 +91,6 @@ const verifyJwt = async (payload, done) => {
 };
 
 passport.use(new GoogleStrategy(googleOpt, verifyGoogle));
-// passport.use(new JwtStrategy(jwtOpt, verifyJwt));
+passport.use(new JwtStrategy(jwtOpt, verifyJwt));
 
 export default passport;

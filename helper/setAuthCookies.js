@@ -24,7 +24,7 @@ const setAuthCookies = (res, tokens = {}) => {
       httpOnly: true, // not accessible to JavaScript — defends against XSS
       secure: false, // only send over HTTPS in production
       sameSite: "lax", // as defined above
-      maxAge: 100, // 15 minutes
+      maxAge: 15 * 60 * 1000, // 15 minutes
       path: "/", // cookie sent for all paths under the origin
     });
   }
