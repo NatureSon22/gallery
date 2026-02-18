@@ -28,3 +28,21 @@ export const setPasswordSchema = z.object({
   message: "Passwords do not match",
   path: ["confirm_password"],
 });
+
+//set forgotpassword schema
+export const forgotPasswordSchema = z.object({
+  email: z.string().email("Invalid email format"),
+});
+
+///set reset password schema
+export const resetPasswordSchema = z.object({
+  token: z.string().min(32, "Invalid or missing reset token"),
+  newPassword: z
+    .string()
+    .min(6, "Password must be at least 6 characters long"),
+});
+
+// verify email schema
+export const verifyEmailSchema = z.object({
+  token: z.string().min(32, "Invalid or missing verification token"),
+});

@@ -10,7 +10,7 @@ import {
   forgotPassword,
   resetPassword,
   setPassword,
-  getLoggedInUser,
+  getLoggedInUser
 } from "../controller/auth.js";
 
 import {
@@ -18,6 +18,9 @@ import {
   signupQuerySchema,
   loginSchema,
   setPasswordSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+  verifyEmailSchema,
 } from "../schemas/auth.schema.js";
 import protect from "../middleware/protect.js";
 import setAuthCookies from "../helper/setAuthCookies.js";
@@ -88,14 +91,28 @@ authRouter.get("/me", protect, getLoggedInUser);
   Password / Verification
   - forgot-password, reset-password, verify-email
 */
-authRouter.post("/forgot-password", forgotPassword);
-authRouter.post("/reset-password", resetPassword);
-authRouter.get("/verify-email", verifyEmail);
+authRouter.post(
+  "/forgot-password",
+  validate(forgotPasswordSchema, "body"),
+  forgotPassword
+);
+
+authRouter.post(
+  "/reset-password",
+  validate(resetPasswordSchema, "body"),
+  resetPassword
+);
+
+authRouter.get(
+  "/verify-email",
+  validate(verifyEmailSchema, "query"),
+  verifyEmail
+);
 
 authRouter.post(
   "/set-password",
   protect,
-  validate(setPasswordSchema),
+  validate(setPasswordSchema, "body"),
   setPassword,
 );
 
