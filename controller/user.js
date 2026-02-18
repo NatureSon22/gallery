@@ -40,25 +40,28 @@ export const updateProfile = async (req, res, next) => {
     const { display_name, age } = req.body;
     const { account_id } = req.user;
 
-    // We check affectedRows to ensure the update actually happened
+    // 1. Perform the update
     const [result] = await req.db.query(
       "UPDATE tb_profile SET display_name = ?, age = ?, updated_at = NOW() WHERE account_id = ?",
       [display_name, age, account_id],
     );
 
-    if (result.affectedRows === 0) {
-      return next(
-        new AppError(
-          "Update failed: Profile not found or no changes made",
-          400,
-        ),
-      );
+    // Note: If display_name and age were ALREADY the same,
+    // affectedRows might be 0 in some configurations.
+    if (result.matchedRows === 0) {
+      return next(new AppError("Profile not found", 404));
     }
+
+    // 2. Fetch the fresh data
+    const [updatedRows] = await req.db.query(
+      "SELECT display_name, age, updated_at FROM tb_profile WHERE account_id = ?",
+      [account_id],
+    );
 
     res.status(200).json({
       status: "success",
       message: "Profile updated successfully",
-      data: result,
+      data: updatedRows[0], // Return the first (and only) row
     });
   } catch (err) {
     next(err);
