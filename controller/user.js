@@ -69,13 +69,15 @@ export const setAvatar = async (req, res, next) => {
     const { account_id } = req.user;
     const file = req.file;
 
+    console.log(req.file);
+
     if (!file) throw new AppError("No file uploaded!", 400);
 
-    const avatarUrl = `/uploads/${file.filename}`;
+    const avatar_url = `/uploads/${file.filename}`;
 
     const [result] = await req.db.query(
       "UPDATE tb_profile SET avatar_url = ? WHERE account_id = ?",
-      [avatarUrl, account_id],
+      [avatar_url, account_id],
     );
 
     if (!result || result.affectedRows === 0)
@@ -85,10 +87,11 @@ export const setAvatar = async (req, res, next) => {
       status: "success",
       message: "Uploaded avatar successfully!",
       data: {
-        avatarUrl,
+        avatar_url,
       },
     });
   } catch (error) {
+    console.error(error);
     next(error);
   }
 };

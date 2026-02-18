@@ -199,13 +199,10 @@ export const login = async (req, res, next) => {
 
     const loginAccount = loginRows[0];
 
-    // if the account is deleted(0)
     if (loginAccount.is_active === 0) {
       return next(new AppError("Invalid credentials", 401));
     }
 
-    // verify passswords of account made from manual signup
-    // If google_id is null, they signed up manually and must have a password
     if (!loginAccount.google_id) {
       const isPasswordValid = await argon2.verify(
         loginAccount.password,
@@ -215,7 +212,6 @@ export const login = async (req, res, next) => {
         return next(new AppError("Invalid credentials", 401));
       }
     } else if (!password && loginAccount.google_id) {
-      // If they try to manual login to a Google account without a password
       return next(
         new AppError(
           "This account uses Google Login. Please sign in with Google.",
@@ -224,35 +220,24 @@ export const login = async (req, res, next) => {
       );
     }
 
-    // checks if the email is verified(1) or not(0)
     if (loginAccount.is_verified === 0) {
       return next(
         new AppError("Please verify your email before logging in.", 403),
       );
     }
 
-    // generate passport compatible tokens
-    // allow deactivated(2) users to get a token so they can reactivate
+    const [profileRows] = await req.db.query(
+      `SELECT display_name, age, avatar_url FROM tb_profile WHERE account_id = ?`,
+      [loginAccount.account_id],
+    );
+
+    const profile = profileRows.length > 0 ? profileRows[0] : {};
+
     const { accessToken, refreshToken } = generateTokens(
       loginAccount.account_id,
       loginAccount.gallery_id,
     );
 
-    console.log("\n🔐 ========== TOKEN GENERATION (LOGIN) ==========");
-    console.log("📝 Generated accessToken length:", accessToken.length);
-    console.log("📝 Generated refreshToken:", refreshToken);
-    console.log("📏 RefreshToken length:", refreshToken.length);
-    console.log("🔤 First 100 chars:", refreshToken.substring(0, 100));
-    console.log(
-      "🔤 Last 100 chars:",
-      refreshToken.substring(refreshToken.length - 100),
-    );
-    console.log(
-      "🔍 Starts with 'eyJ'?",
-      refreshToken.startsWith("eyJ") ? "YES ✅" : "NO ❌",
-    );
-
-    // if the account is deactivated(2), send a fail and a warning message
     if (loginAccount.is_active === 2) {
       return res.status(403).json({
         status: "fail",
@@ -261,148 +246,49 @@ export const login = async (req, res, next) => {
       });
     }
 
-    console.log("\n💾 SAVING TO DATABASE...");
-    console.log("Account ID:", loginAccount.account_id);
-    console.log(
-      "Token to save (first 50 chars):",
-      refreshToken.substring(0, 50),
-    );
-
     await req.db.query(
       "UPDATE tb_account SET refresh_token = ? WHERE account_id = ?",
       [refreshToken, loginAccount.account_id],
     );
 
-    // IMMEDIATELY verify what was saved
-    const [dbCheck] = await req.db.query(
-      "SELECT refresh_token, CHAR_LENGTH(refresh_token) as token_length FROM tb_account WHERE account_id = ?",
-      [loginAccount.account_id],
-    );
-
-    console.log("\n💾 DATABASE VERIFICATION (immediately after save):");
-    console.log("📏 Generated token length:", refreshToken.length);
-    console.log("📏 DB token length:", dbCheck[0].token_length);
-    console.log(
-      "📝 DB token (first 100):",
-      dbCheck[0].refresh_token?.substring(0, 100),
-    );
-    console.log(
-      "📝 DB token (last 100):",
-      dbCheck[0].refresh_token?.substring(
-        dbCheck[0].refresh_token.length - 100,
-      ),
-    );
-    console.log(
-      "✅ Tokens match?",
-      refreshToken === dbCheck[0].refresh_token ? "YES ✅" : "NO ❌ PROBLEM!",
-    );
-
-    if (refreshToken !== dbCheck[0].refresh_token) {
-      console.log("\n🚨 CRITICAL: TOKEN MISMATCH AFTER DATABASE SAVE!");
-      console.log("Expected length:", refreshToken.length);
-      console.log("Actual length:", dbCheck[0].token_length);
-      console.log(
-        "Difference:",
-        refreshToken.length - dbCheck[0].token_length,
-        "characters lost",
-      );
-      console.log("⚠️  This indicates DATABASE TRUNCATION");
-      console.log(
-        "📋 Solution: ALTER TABLE tb_account MODIFY COLUMN refresh_token TEXT;",
-      );
-
-      // Find first difference
-      let firstDiff = -1;
-      for (
-        let i = 0;
-        i <
-        Math.min(refreshToken.length, dbCheck[0].refresh_token?.length || 0);
-        i++
-      ) {
-        if (refreshToken[i] !== dbCheck[0].refresh_token[i]) {
-          firstDiff = i;
-          break;
-        }
-      }
-      if (firstDiff !== -1) {
-        console.log("First difference at index:", firstDiff);
-      } else {
-        console.log(
-          "Tokens match up to index:",
-          Math.min(refreshToken.length, dbCheck[0].refresh_token?.length || 0),
-        );
-        console.log("Token was truncated at this point");
-      }
-    }
-
-    //setAuthCookies(res, { accessToken, refreshToken });
-
     const isProd = process.env.NODE_ENV === "production";
-
-    // sameSite controls when cookies are sent on cross-site requests:
-    // - "none": cookie is sent in all contexts (cross-site allowed). Modern browsers require Secure=true when using "none".
-    // - "lax": cookie is sent on top-level navigations (safe for most auth redirects) but NOT on most cross-site subrequests (good CSRF protection).
-    // - "strict": cookie is only sent for same-site requests (strictest CSRF protection; may break cross-site OAuth redirects).
     const sameSite = isProd ? "none" : "lax";
 
-    console.log("\n🍪 SETTING COOKIES...");
-    console.log("Environment:", isProd ? "PRODUCTION" : "DEVELOPMENT");
-    console.log("sameSite:", sameSite);
-
-    // Short-lived access token cookie (sent to all routes)
     if (accessToken) {
       res.cookie("access_token", accessToken, {
-        httpOnly: true, // not accessible to JavaScript — defends against XSS
-        secure: false, // only send over HTTPS in production
-        sameSite: "lax", // as defined above
-        maxAge: 60 * 1000, // 1 minute for testing (change to 15 * 60 * 1000 for production)
-        path: "/", // cookie sent for all paths under the origin
+        httpOnly: true,
+        secure: false,
+        sameSite: "lax",
+        maxAge: 15 * 60 * 1000,
+        path: "/",
       });
-      console.log("✅ access_token cookie set (expires in 1 minute)");
     }
 
-    // Long-lived refresh token cookie (scoped to refresh endpoint)
     if (refreshToken) {
       res.cookie("refresh_token", refreshToken, {
         httpOnly: true,
         secure: false,
         sameSite: "lax",
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-        // path: controls which request paths the browser will include this cookie on.
-        // Example:
-        // - "/api/v1/auth/refresh" => browser sends cookie only when request path starts with that value.
-        // - "/" => browser sends cookie on all requests to the origin.
-        // Scoping refresh_token to the refresh endpoint reduces token exposure.
-        path: "/", // Using "/" for now, consider "/api/v1/auth/refresh" for production
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        path: "/",
       });
-      console.log("✅ refresh_token cookie set (expires in 7 days)");
-      console.log("Cookie value length:", refreshToken.length);
-      console.log("Cookie value (first 50):", refreshToken.substring(0, 50));
     }
 
-    console.log("\n📤 RESPONSE HEADERS:");
-    const setCookieHeaders = res.getHeader("Set-Cookie");
-    if (setCookieHeaders) {
-      console.log("Set-Cookie headers:", setCookieHeaders);
-    }
-
-    console.log("\n✅ ========== LOGIN SUCCESSFUL ==========");
-    console.log("Account ID:", loginAccount.account_id);
-    console.log("Gallery ID:", loginAccount.gallery_id);
-    console.log("========================================\n");
-
-    // Note: You can't read cookies from res.cookies (that's for request)
-    // Cookies are sent via Set-Cookie header in the response
-
-    // successful login for active(1)
-    // TODO: redirect to login
     res.status(200).json({
       status: "success",
       message: "Login successful",
-      data: { userData: loginAccount },
+      data: {
+        account_id: loginAccount.account_id,
+        google_id: loginAccount.google_id,
+        email: loginAccount.email,
+        gallery_id: loginAccount.gallery_id,
+        display_name: profile.display_name || null,
+        age: profile.age || null,
+        avatar_url: profile.avatar_url || null, 
+        is_active: loginAccount.is_active,
+      },
     });
   } catch (err) {
-    console.log("\n❌ LOGIN ERROR:", err.message);
     next(err);
   }
 };

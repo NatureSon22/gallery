@@ -2,6 +2,7 @@ import "dotenv/config";
 import express, { json, urlencoded } from "express";
 import path from "path";
 import cors from "cors";
+import corsOptions from "./config/cors.js";
 import helmet from "helmet";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
@@ -26,14 +27,7 @@ app.set("trust proxy", 1);
 app.use(cookieParser());
 
 // CORS Configuration
-app.use(
-  cors({
-    origin: FRONTEND_ORIGIN,
-    credentials: true,
-    // ✅ Remove allowedHeaders or add Cookie to it
-    // allowedHeaders: ["Content-Type", "Authorization"],
-  }),
-);
+app.use(cors(corsOptions));
 
 // Helmet (Uncommented and cleaned up)
 // app.use(

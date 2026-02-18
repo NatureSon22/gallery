@@ -36,6 +36,8 @@ authRouter.post(
   validate(signupQuerySchema, "query"),
   signup,
 );
+
+
 authRouter.post("/login", validate(loginSchema, "body"), login);
 authRouter.post("/refresh", refreshToken);
 
