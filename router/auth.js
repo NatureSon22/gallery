@@ -80,7 +80,7 @@ authRouter.get("/google/callback", (req, res, next) => {
     setAuthCookies(res, { accessToken, refreshToken });
 
     // TODO: redirect to login
-    res.redirect(`${FRONTEND}/google-redirect`);
+    res.redirect(`${FRONTEND}/logging-redirect`);
   })(req, res, next);
 });
 
