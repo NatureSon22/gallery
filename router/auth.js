@@ -11,6 +11,7 @@ import {
   resetPassword,
   setPassword,
   getLoggedInUser,
+  logout,
 } from "../controller/auth.js";
 
 import {
@@ -80,7 +81,7 @@ authRouter.get("/google/callback", (req, res, next) => {
     setAuthCookies(res, { accessToken, refreshToken });
 
     // TODO: redirect to login
-    res.redirect(`${FRONTEND}/google-redirect`);
+    res.redirect(`${FRONTEND}/logging-redirect`);
   })(req, res, next);
 });
 
@@ -114,5 +115,7 @@ authRouter.post(
   validate(setPasswordSchema, "body"),
   setPassword,
 );
+
+authRouter.post("/logout", protect, logout);
 
 export default authRouter;

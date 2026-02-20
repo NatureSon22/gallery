@@ -879,3 +879,48 @@ export const setPassword = async (req, res, next) => {
     next(err);
   }
 };
+
+export const logout = async (req, res) => {
+  try {
+    const isProd = process.env.NODE_ENV === "production";
+
+    // Check if the request is coming over HTTPS (important for port forwarding)
+    const isSecure =
+      isProd || req.secure || req.headers["x-forwarded-proto"] === "https";
+
+    // Options MUST match the ones used when setting the cookie
+    const cookieOpts = {
+      httpOnly: true,
+      secure: isSecure,
+      sameSite: isProd ? "none" : "lax",
+      path: "/",
+    };
+
+    // 1. Revoke Refresh Token in Database
+    // We get the account_id from the authenticated user (req.user)
+    if (req.user?.account_id) {
+      await req.db.query(
+        "UPDATE tb_account SET refresh_token = NULL WHERE account_id = ?",
+        [req.user.account_id],
+      );
+    }
+
+    // 2. Clear Cookies on Browser
+    res.clearCookie("access_token", cookieOpts);
+    res.clearCookie("refresh_token", cookieOpts);
+
+    console.log(`User ${req.user?.account_id || "unknown"} logged out`);
+
+    return res.status(200).json({
+      status: "success",
+      message: "Logged out successfully",
+    });
+  } catch (err) {
+    // Even if DB fails, clear the cookies anyway
+    res.clearCookie("access_token", cookieOpts);
+    res.clearCookie("refresh_token", cookieOpts);
+    return res
+      .status(500)
+      .json({ status: "error", message: "Logout partially failed" });
+  }
+};
