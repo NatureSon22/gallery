@@ -1,21 +1,17 @@
-const isProduction = process.env.NODE_ENV === "production";
-
-// 1. Define who is allowed to talk to your API
-const allowedOrigins = isProduction
-  ? []
-  : ["http://localhost:3000", "http://localhost:5173"];
+// Define who is allowed to talk to API
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",").map((origin) => origin.trim())
+  : [];
 
 const corsOptions = {
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
 
-    // Return the matching canonical origin from your whitelist
-    const match = allowedOrigins.find(
-      (allowed) => allowed === origin || allowed === origin.replace(/\/$/, ""),
-    );
+    const cleanOrigin = origin.replace(/\/$/, "");
+    const isAllowed = allowedOrigins.includes(cleanOrigin);
 
-    if (match) {
-      callback(null, match); //
+    if (isAllowed) {
+      callback(null, isAllowed);
     } else {
       callback(new Error("Not allowed by CORS"));
     }

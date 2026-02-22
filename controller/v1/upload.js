@@ -1,4 +1,4 @@
-import AppError from "../helper/AppError.js";
+import AppError from "../../helper/AppError.js";
 
 export const getPhotos = async (req, res, next) => {
   try {

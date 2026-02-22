@@ -1,4 +1,4 @@
-import AppError from "../helper/AppError.js";
+import AppError from "../../helper/AppError.js";
 
 // Get logged-in user's profile
 // controller/profile.js
@@ -150,6 +150,7 @@ export const reactivateAccount = async (req, res, next) => {
 export const deleteAccount = async (req, res, next) => {
   try {
     //soft delete, set is_active to 0, delete refreshToken(to invalidate sessions)
+    console.log(req.user);
     const [result] = await req.db.query(
       "UPDATE tb_account SET is_active = 0, refresh_token = NULL WHERE account_id = ?",
       [req.user.account_id],
@@ -157,8 +158,24 @@ export const deleteAccount = async (req, res, next) => {
 
     // If no rows updated, account does not exist
     if (result.affectedRows === 0) {
-      return next(new AppError("Account not found", 404));
+      throw next(new AppError("Account not found", 404));
     }
+
+    const [deletedUser] = await req.db.query(
+      "SELECT * FROM tb_account WHERE account_id = ?",
+      [req.user.account_id],
+    );
+
+    if (!deletedUser || deletedUser.length === 0) {
+      throw next(new AppError("Account not found", 404));
+    }
+
+    const user = deletedUser[0];
+
+    await req.db.query(
+      "INSERT INTO tb_deleted_accounts (account_id, email) VALUES (?, ?)",
+      [user.account_id, user.email],
+    );
 
     res.status(200).json({
       status: "success",

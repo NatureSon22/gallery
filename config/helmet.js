@@ -56,7 +56,7 @@ const helmetConfig = {
   xPermittedCrossDomainPolicies: { permittedPolicies: "none" },
   // X-Powered-By: Removes the X-Powered-By header to hide technology details and save bandwidth.
   // This behavior is enabled by default.
-  xPoweredBy: true,
+  xPoweredBy: false,
   // X-XSS-Protection: Disables the browser's often buggy cross-site scripting filter.
   // Set to "0" by default.
   xXssProtection: true,

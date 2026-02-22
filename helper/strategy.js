@@ -3,8 +3,10 @@ import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { config } from "dotenv";
 import db from "../helper/db.js";
-import { createSession, findOrCreateGoogleUser } from "../controller/auth.js";
-import setAuthCookies from "./setAuthCookies.js";
+import {
+  createSession,
+  findOrCreateGoogleUser,
+} from "../controller/v1/auth.js";
 
 config();
 

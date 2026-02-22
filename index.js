@@ -8,13 +8,12 @@ import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import { rateLimit } from "express-rate-limit";
 
-// Local Imports
 import db from "./helper/db.js";
-import logger from "./helper/logger.js";
 import passport from "./helper/strategy.js";
-import router from "./router/index.js";
+import router from "./router/router.js";
 import errorHandler from "./middleware/errorHandler.js";
 import helmetConfig from "./config/helmet.js";
+import configureCron from "./helper/purgeUsers.js";
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -26,14 +25,14 @@ app.use(cookieParser());
 // CORS Configuration
 app.use(cors(corsOptions));
 
-//app.use(helmet(helmetConfig));
+app.use(helmet(helmetConfig));
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
   standardHeaders: true,
   legacyHeaders: false,
-  message: "Too many requests from this IP, please try again later",
+  message: "Too many requests, please try again later",
 });
 app.use("/api/", limiter);
 
@@ -44,18 +43,18 @@ app.use(urlencoded({ extended: true, limit: "10mb" }));
 app.use("/uploads", express.static("uploads"));
 app.use("/public", express.static(path.resolve(process.cwd(), "public")));
 
-// --- 4. Custom Context & Auth ---
 app.use((req, res, next) => {
   req.db = db;
   next();
 });
 
+
 app.use(passport.initialize());
 
-// --- 5. Routes ---
-app.use("/api/v1", router);
+app.use("/api", router);
 
-// --- 6. Error Handling (Must be last) ---
+//configureCron(db);
+
 app.use(errorHandler);
 
 app.listen(PORT, () => {
