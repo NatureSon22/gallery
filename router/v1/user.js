@@ -1,6 +1,5 @@
 import { Router } from "express";
-import upload from "../../helper/storage.js";
-import protect from "../../middleware/protect.js";
+
 import {
   getProfile,
   updateProfile,
@@ -8,7 +7,14 @@ import {
   reactivateAccount,
   deleteAccount,
   setAvatar,
+  verifyPassword,
+  sendGoogleDeactivationEmail,
+  confirmGoogleDeactivation,
 } from "../../controller/v1/user.js";
+
+import protect from "../../middleware/protect.js";
+import upload from "../../helper/storage.js";
+import validate from "../../middleware/validation.js";
 
 const userRouter = Router();
 
@@ -18,8 +24,12 @@ userRouter.get("/profile", getProfile);
 userRouter.patch("/profile", updateProfile);
 userRouter.post("/profile/avatar", upload.single("avatar"), setAvatar);
 
+userRouter.post("/verify", verifyPassword);
 userRouter.patch("/account/deactivate", deactivateAccount);
 userRouter.patch("/account/reactivate", reactivateAccount);
 userRouter.delete("/account", deleteAccount);
+
+userRouter.post("/google/deactivate", sendGoogleDeactivationEmail);
+userRouter.get("/confirm-deactivation", confirmGoogleDeactivation);
 
 export default userRouter;
