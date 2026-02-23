@@ -7,6 +7,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import { rateLimit } from "express-rate-limit";
+import http from "http";
 
 import db from "./helper/db.js";
 import passport from "./helper/strategy.js";
@@ -17,6 +18,7 @@ import configureCron from "./helper/purgeUsers.js";
 
 const app = express();
 const PORT = process.env.PORT || 8000;
+
 
 app.set("trust proxy", 1);
 
@@ -41,13 +43,12 @@ app.use(json({ limit: "10mb" }));
 app.use(urlencoded({ extended: true, limit: "10mb" }));
 
 app.use("/uploads", express.static("uploads"));
-app.use("/public", express.static(path.resolve(process.cwd(), "public")));
+app.use("/public", express.static("public"));
 
 app.use((req, res, next) => {
   req.db = db;
   next();
 });
-
 
 app.use(passport.initialize());
 
@@ -60,5 +61,3 @@ app.use(errorHandler);
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-
-

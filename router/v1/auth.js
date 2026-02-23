@@ -56,7 +56,7 @@ authRouter.get("/google/callback", (req, res, next) => {
       refreshToken: payload.tokens?.refreshToken 
     });
 
-    res.redirect(`${FRONTEND}/auth/callback`);
+    res.redirect(`${FRONTEND}/auth/googl`);
   })(req, res, next);
 });
 

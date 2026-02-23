@@ -1,12 +1,8 @@
-import AppError from "../helper/AppError.js";
+import AppError from "../../helper/AppError.js";
 import argon2 from "argon2";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
-import { sendDeactivationEmail } from "../helper/mailer.js";
-import AppError from "../../helper/AppError.js";
-
-// Get logged-in user's profile
-// controller/profile.js
+import { sendDeactivationEmail } from "../../helper/mailer.js";
 
 export const getProfile = async (req, res, next) => {
   try {
@@ -105,7 +101,7 @@ export const setAvatar = async (req, res, next) => {
   }
 };
 
-// Verify password 
+// Verify password
 export const verifyPassword = async (req, res, next) => {
   try {
     const { password } = req.validatedBody;
@@ -175,7 +171,7 @@ export const deactivateAccount = async (req, res, next) => {
 
     res.status(200).json({
       status: "success",
-      message:    
+      message:
         "Account deactivated successfully. Your next login will be unlock the account again.",
     });
   } catch (err) {
@@ -277,7 +273,8 @@ export const confirmGoogleDeactivation = async (req, res, next) => {
 
     res.status(200).json({
       status: "success",
-      message: "Account deactivated successfully. Your next login will be blocked.",
+      message:
+        "Account deactivated successfully. Your next login will be blocked.",
     });
   } catch (err) {
     next(err);
