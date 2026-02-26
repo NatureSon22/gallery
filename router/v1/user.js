@@ -14,7 +14,6 @@ import {
 
 import protect from "../../middleware/protect.js";
 import upload from "../../helper/storage.js";
-import validate from "../../middleware/validation.js";
 
 const userRouter = Router();
 

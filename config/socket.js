@@ -62,15 +62,17 @@ const EVENTS = {
   ERROR: "error:internal", // Generic catch-all for socket failures
 };
 
-// array = []
-// socket.on(new_vote, array)
-
 const configSocket = (server) => {
   const io = new Server(server, {
     cors: {
       origin: process.env.FRONTEND_ORIGIN,
       methods: ["GET", "POST"],
     },
+  });
+
+  // middleware
+  io.use((socket, next) => {
+    
   });
 
   io.on("connection", (socket) => {
